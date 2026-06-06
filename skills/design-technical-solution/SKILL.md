@@ -69,34 +69,40 @@ description: Produces technical solution documents from PRD input, structured fo
    **输出形式**：使用表格列出类/接口/枚举名、包路径、职责、关键字段/方法、是否新增或修改、对应实现 Skill。
 
 4. **领域层设计（必选）**  
-   遵循**先按业务分层级，再按业务领域分节、每领域下依次设计领域模型、领域工厂、领域规则、领域动作、领域事件**的原则。须按 DDD 规范设计，便于与 **impl-domain-module** 对齐落码，并满足**领域模型基本属性与必备动作**约定。详见 [domain-layer-design-experience.md](references/domain-layer-design-experience.md) 与 [domain-model-design.md](references/domain-model-design.md)。  
+   遵循**先按业务分层级，再按业务领域分节、每领域下依次设计领域模型、领域动作、领域规则、领域工厂、领域网关、领域事件**的原则。须按 DDD 规范设计，便于与 **impl-domain-module** 对齐落码，并满足**领域模型基本属性与必备动作**约定。详见 [domain-layer-design-experience.md](references/domain-layer-design-experience.md) 与 [domain-model-design.md](references/domain-model-design.md)。  
    **文档目录结构**：  
    - **二级目录**：按**业务领域**划分（如 4.2 用户（user）、4.3 家庭（family）、4.4 账本（book）、4.5 账户（account））；业务领域与 4.1 业务层级划分一致，每个领域一节。  
-   - **三级目录**：每个业务领域下固定五个子节——**领域模型**、**领域工厂**、**领域规则**、**领域动作**、**领域事件**。  
-   - 示例：`4.2 用户（user）` → `4.2.1 领域模型`、`4.2.2 领域工厂`、`4.2.3 领域规则`、`4.2.4 领域动作`、`4.2.5 领域事件`；`4.3 家庭（family）` → `4.3.1 领域模型`、`4.3.2 领域工厂`、`4.3.3 领域规则`、`4.3.4 领域动作`、`4.3.5 领域事件`；依此类推。
+   - **三级目录**：每个业务领域下固定六个子节——**领域模型**、**领域动作**、**领域规则**、**领域工厂**、**领域网关**、**领域事件**。  
+   - 示例：`4.2 用户（user）` → `4.2.1 领域模型`、`4.2.2 领域动作`、`4.2.3 领域规则`、`4.2.4 领域工厂`、`4.2.5 领域网关`、`4.2.6 领域事件`；`4.3 家庭（family）` → `4.3.1 领域模型`、`4.3.2 领域动作`、`4.3.3 领域规则`、`4.3.4 领域工厂`、`4.3.5 领域网关`、`4.3.6 领域事件`；依此类推。
 
    **各三级目录内容要求**（在每一业务领域下分别填写）：
 
    - **领域模型**（如 4.x.1）  
-     - **基本属性（强制）**：聚合根与实体须有 **id**、**num**、**create_no**、**update_no**；值对象无需。  
+     - **基本属性（强制）**：聚合根与实体须有 **id**、**num**、**create_no**、**update_no**；聚合根还必须持有领域协作依赖属性：**Repository（仓储）**、**Gateway（领域网关）**、**DomainEventPublisher（领域事件发布器）**；值对象无需。  
      - **必备动作（强制）**：聚合根及可持久化实体须有 **save(operatorId)**、**delete(operatorId)**；**所有领域动作须带操作人参数**。  
      - **表现形式**：**领域类图 + 表格**。类图表达类名、属性（含类型）、关联；表格体现领域结构（对象、类型、属性、与其它对象关系）。  
      - **聚合与边界**：本领域聚合边界、聚合根及聚合内实体/值对象；一致性边界；跨聚合仅 ID 引用；Repository/Factory/Gateway 方法清单或类图。
 
-   - **领域工厂**（如 4.x.2）  
+   - **领域动作**（如 4.x.2）  
+     - 使用**表格**列出本领域聚合根/实体的领域动作，列：聚合/实体、领域动作、职责、前置条件、后置条件/规则、领域事件。  
+     - **每个领域动作须配有一张时序图**（Mermaid sequenceDiagram 或等价图），表达步骤顺序、Repository/Gateway 调用、事件发布时机。
+
+   - **领域规则**（如 4.x.3）  
+     - 使用**表格**展示本领域的聚合内不变性与关键业务规则，列：聚合/对象、规则类型、规则描述、违反时表达。
+
+   - **领域工厂**（如 4.x.4）  
      - **强制设计领域工厂（Factory）接口**：每个聚合根必须设计对应 `*Factory`，由 domain 层定义接口，infra 层实现。  
      - **对象构建约束**：聚合根、实体等领域对象的创建、加载、重建必须通过领域工厂完成；application 层不得直接 `new` 领域对象，也不得直接调用领域对象静态 `create` 方法构建对象。  
      - **方法清单**：使用表格列出工厂方法，列：Factory、方法名、入参、返回值、职责、依赖。领域工厂**只能包含两个方法**：`create(...)`（根据属性构建新的领域对象）、`createByNum(...)`（根据业务编码 num 构建既有领域对象，方法内部通过 Repository 获取并构建领域对象）。不得设计 `createById(...)`、`rebuild(...)` 或其他工厂方法。  
      - **时序说明**：`create(...)` 与 `createByNum(...)` 都用于构建领域对象；`createByNum(...)` 的时序须体现通过 Repository/仓储获取数据并构建领域对象。
 
-   - **领域规则**（如 4.x.3）  
-     - 使用**表格**展示本领域的聚合内不变性与关键业务规则，列：聚合/对象、规则类型、规则描述、违反时表达。
+   - **领域网关**（如 4.x.5）  
+     - **定义位置**：领域网关（Gateway）接口必须定义在 domain 层，用于表达领域层需要的外部能力或跨边界协作能力。  
+     - **实现位置**：领域网关实现在 infra 层，由基础设施适配第三方服务、编号生成、外部系统调用、读模型协作等具体能力。  
+     - **方法清单**：使用表格列出 Gateway、方法名、入参、返回值、职责、外部依赖、失败策略。  
+     - **依赖约束**：domain 只依赖 Gateway 接口，不依赖 infra 实现；application 不直接调用 GatewayImpl。
 
-   - **领域动作**（如 4.x.4）  
-     - 使用**表格**列出本领域聚合根/实体的领域动作，列：聚合/实体、领域动作、职责、前置条件、后置条件/规则、领域事件。  
-     - **每个领域动作须配有一张时序图**（Mermaid sequenceDiagram 或等价图），表达步骤顺序、Repository/Gateway 调用、事件发布时机。
-
-   - **领域事件**（如 4.x.5）  
+   - **领域事件**（如 4.x.6）  
      - 使用**表格**列出本领域涉及的领域事件，列：事件名、触发时机、载荷要点、可订阅方/用途。
 
    在「领域层设计」章首可保留 **4.1 业务层级划分**（表格列出层级与业务/子域说明），再按业务领域分节。详见 [domain-model-design.md](references/domain-model-design.md) 中「领域模型设计：领域类图与领域动作」及「**领域对象设计规范（专业版）**」小节。
@@ -171,14 +177,32 @@ description: Produces technical solution documents from PRD input, structured fo
 13. **其他（可选）**  
    外部依赖、配置项、非功能需求等，按需简短列出。
 
+## 模块级自检门禁
+
+在技术方案设计过程中，**每完成一个模块/章节后，必须立即进行该模块自检；自检通过后，才能继续设计下一模块/章节**。不得在未完成当前模块自检的情况下直接进入下一步。
+
+模块级自检要求：
+
+1. **架构设计完成后自检**：确认应用架构、部署架构、模块调用关系、命令/查询归属、部署架构处理方式均已明确。
+2. **Facade 层设计完成后自检**：确认是否有 Facade 层变更；若无变更，已明确写出「本次无 Facade 层变更」。
+3. **领域层设计完成后自检**：确认领域模型、领域动作、领域规则、领域工厂、领域网关、领域事件均已完整；Factory、Gateway、Repository 等强规约已满足。
+4. **基础设施层设计完成后自检**：确认 Entity、Mapper、RepositoryImpl、FactoryImpl、GatewayImpl、common 能力与领域层/数据库设计一致。
+5. **应用层设计完成后自检**：确认 CommandService / QueryService 分工、ParamDTO 入参、DTO 返回、Repository 禁用约束、Service 时序图均满足要求。
+6. **Adapter 层设计完成后自检**：确认 Controller、定时任务、事件监听等入口清单和时序图完整。
+7. **数据库设计完成后自检**：确认表结构、DDL、必要 DML、主键、业务编码、审计字段、时间字段和索引设计完整。
+8. **模块变更清单完成后自检**：确认每条变更都能对应唯一实现 Skill，且与前面各层设计一致。
+
+若某模块自检发现遗漏或冲突，必须先补齐或修正当前模块，再继续下一模块。
+
 ## 友好性自检
 
 - [ ] 每个「模块变更」都能对应到**唯一**的代码编写类 skill（impl-facade-module、impl-client-module 等）。
 - [ ] **架构设计**已包含 **应用架构** 与 **部署架构** 两部分；应用架构包含代码结构四列表格（**层**、**领域**、**包**、**职责**）及关键模块调用关系；adapter 入口已覆盖 Controller、定时任务、事件监听等外部触发方式；模块调用关系已明确区分命令类控制/调用（CommandController / CommandService）与查询类控制/调用（QueryController / QueryService），无法判断时已向用户确认；部署架构处理方式已让用户三选一，若选择不变则默认写明「部署架构不变，无新增应用/前端部署实例，复用现有部署架构」，若选择重新设计或调整则已展开应用/前端部署设计并明确实例数量。
 - [ ] **Facade 层设计**已说明本次是否涉及通用基础类型与通用契约变化；若无变化，已明确写出「本次无 Facade 层变更」。
-- [ ] **领域层设计**按**业务领域为二级目录**（如 4.2 用户、4.3 家庭、4.4 账本…），每个业务领域下包含**五个三级目录**：**领域模型**、**领域工厂**、**领域规则**、**领域动作**、**领域事件**；各节内容符合上条（类图+表格、工厂方法表、规则表、动作表+每动作一时序图、事件表）；与模块变更清单中 domain 层描述一致。
-- [ ] 每个聚合根已设计对应 **Factory 接口**，领域对象创建、加载、重建均通过 Factory；application 层不直接 new 领域对象、不直接调用领域对象静态 create 构建对象。
-- [ ] 所有聚合根与实体已具备**基本属性** id、num、create_no、update_no；均具备 **save**、**delete** 领域动作；**所有领域动作均包含操作人参数**（如 operatorId）。
+- [ ] **领域层设计**按**业务领域为二级目录**（如 4.2 用户、4.3 家庭、4.4 账本…），每个业务领域下包含**六个三级目录**：**领域模型**、**领域动作**、**领域规则**、**领域工厂**、**领域网关**、**领域事件**；各节内容符合上条（类图+表格、动作表+每动作一时序图、规则表、工厂方法表、网关方法表、事件表）；与模块变更清单中 domain 层描述一致。
+- [ ] 每个聚合根已设计对应 **Factory 接口**，且 Factory 只包含 `create(...)` 与 `createByNum(...)` 两个方法；两个方法都用于构建领域对象；application 层不直接 new 领域对象、不直接调用领域对象静态 create 构建对象。
+- [ ] 领域网关 Gateway 接口已定义在 domain 层，并明确由 infra 层实现 GatewayImpl。
+- [ ] 所有聚合根与实体已具备**基本属性** id、num、create_no、update_no；聚合根已具备 Repository、Gateway、DomainEventPublisher 三类领域协作依赖属性；均具备 **save**、**delete** 领域动作；**所有领域动作均包含操作人参数**（如 operatorId）。
 - [ ] **基础设施层设计**已覆盖 Entity、Mapper、RepositoryImpl、FactoryImpl、GatewayImpl 与 common 能力；RepositoryImpl 不作为 application 查询入口；与数据库设计和 domain 接口一致；若无 infra 变化，已明确写出「本次无基础设施层变更」。
 - [ ] **数据库设计**已包含表结构、**DDL 语句**（可直接执行），若涉及刷数则含 **DML 语句**；与领域对应关系及模块变更清单中 infra 层描述一致；**各表主键 `id` 为 `BIGINT` 且自增**；**`create_time`/`update_time` 命名且时间类型毫秒精度**（见 §8 / reference 数据库模块）。
 - [ ] **代码分支命名**已填写：需求类为 `feature-YYYYMMDD-英文名`，BUG 修复类为 `hotfix-YYYYMMDD-英文名`；方案中写出本条对应的具体分支名。
@@ -197,14 +221,14 @@ description: Produces technical solution documents from PRD input, structured fo
 
 ## Reference
 
-- **Pre-design Questions**: [design-questions.md](references/design-questions.md)
-- **Application Architecture Design Experience**: [application-architecture-experience.md](references/application-architecture-experience.md)
-- **Deployment Architecture Design Experience**: [deployment-architecture-experience.md](references/deployment-architecture-experience.md)
-- **Facade Layer Design Experience**: [facade-layer-design-experience.md](references/facade-layer-design-experience.md)
-- **Domain Layer Design Experience**: [domain-layer-design-experience.md](references/domain-layer-design-experience.md)
-- **Domain Model Design Guide**: [domain-model-design.md](references/domain-model-design.md)
-- **Infrastructure Layer Design Experience**: [infra-layer-design-experience.md](references/infra-layer-design-experience.md)
-- **Application Layer Design Experience**: [application-layer-design-experience.md](references/application-layer-design-experience.md)
-- **Adapter Layer Design Experience**: [adapter-layer-design-experience.md](references/adapter-layer-design-experience.md)
-- **Database Design Experience**: [database-design-experience.md](references/database-design-experience.md)
-- **Implementation Layers (Facade, Infra, Application, Adapter, Database)**: [implementation-layers.md](references/implementation-layers.md)
+- **设计前问题清单**：[design-questions.md](references/design-questions.md)
+- **应用架构设计经验**：[application-architecture-experience.md](references/application-architecture-experience.md)
+- **部署架构设计经验**：[deployment-architecture-experience.md](references/deployment-architecture-experience.md)
+- **门面层设计经验**：[facade-layer-design-experience.md](references/facade-layer-design-experience.md)
+- **领域层设计经验**：[domain-layer-design-experience.md](references/domain-layer-design-experience.md)
+- **领域模型设计规范**：[domain-model-design.md](references/domain-model-design.md)
+- **基础设施层设计经验**：[infra-layer-design-experience.md](references/infra-layer-design-experience.md)
+- **应用层设计经验**：[application-layer-design-experience.md](references/application-layer-design-experience.md)
+- **适配层设计经验**：[adapter-layer-design-experience.md](references/adapter-layer-design-experience.md)
+- **数据库设计经验**：[database-design-experience.md](references/database-design-experience.md)
+- **分层实现参考**：[implementation-layers.md](references/implementation-layers.md)

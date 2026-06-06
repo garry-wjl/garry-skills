@@ -132,29 +132,33 @@ For each adapter entry (Mermaid sequenceDiagram or ordered list):
 
 ---
 
-## Module Changes Checklist
+## 模块变更清单
 
-| Layer | Change Items | Corresponding Skill |
+| 层 | 变更项 | 对应 Skill |
 |-------|--------------|------------------|
-| facade | DomainEntity, DomainEventDTO, DomainEventPublisher, Result/CommonRequest/common contracts | impl-facade-module |
-| client | New ParamDTO, DTO, VO, Result, API contracts, constants | impl-client-module |
-| domain | Aggregates, entities, Repository/Factory/Gateway **interfaces**, ValueObjects, domain events | impl-domain-module |
-| infra | Entities, Mappers, Repository/Factory/Gateway **implementations**, common/constant/event/util/client | impl-infra-module |
-| application | CommandService, QueryService, StreamService, config/hook/interceptor/service/tool | impl-application-module |
-| adapter | Controller, Scheduler/Job, Listener, config (BaseController, GlobalExceptionHandler, TokenFilter) | impl-adapter-module |
+| facade | DomainEntity、DomainEventDTO、DomainEventPublisher、Result、CommonRequest 等通用契约 | impl-facade-module |
+| client | 新增或修改 ParamDTO、DTO、VO、Result、API 契约、常量 | impl-client-module |
+| domain | 聚合、实体、Repository/Factory/Gateway 接口、值对象、领域事件 | impl-domain-module |
+| infra | Entity、Mapper、Repository/Factory/Gateway 实现、common/constant/event/util/client | impl-infra-module |
+| application | CommandService、QueryService、StreamService、config/hook/interceptor/service/tool | impl-application-module |
+| adapter | Controller、Scheduler/Job、Listener、config（BaseController、GlobalExceptionHandler、TokenFilter 等） | impl-adapter-module |
 
 ---
 
-## Implementation Order (Default)
+## 实现顺序与模块自检门禁
 
-1. **facade** (if changes needed)
+默认实现顺序：
+
+1. **facade**（如有变化）
 2. **client**
 3. **domain**
 4. **infra**
 5. **application**
 6. **adapter**
 
-If plan only involves specific layers, follow only the stated layers in plan's "implementation order".
+如果方案只涉及部分层，只列出涉及层的顺序。
+
+每完成一个模块设计后，必须先完成该模块自检；自检通过后，才能进入下一模块。若自检发现遗漏、冲突或依赖不一致，必须先修正当前模块。
 
 ---
 
