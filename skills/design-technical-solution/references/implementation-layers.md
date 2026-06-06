@@ -1,23 +1,25 @@
-# Application, Adapter, Database and Module Changes
+# Facade, Infrastructure, Application, Adapter, Database and Module Changes
 
 ## Application Layer Design
 
 ### Service Method Checklist
 
 For each service (CommandService, QueryService, StreamService), specify:
-- **Method signature**: Name, input type (Param or primitive), return type (Result<VO>, void, Long)
+- **Method signature**: Name, input type (ParamDTO class), return type (client DTO, void, String/Long business identifier)
 - **Responsibility**: One-line business use case description
-- **Input/Output**: Key fields or reference Param/VO names
+- **Input/Output**: Key fields or reference ParamDTO/DTO names
+- **Repository constraint**: Application services MUST NOT inject or call domain Repository interfaces. Query requirements are provided by the corresponding domain QueryService.
 
 ### Method Sequence Logic
 
 For each method, write execution steps (Mermaid sequenceDiagram or ordered list):
 1. **Parameter validation**: Non-null, format, business rules
 2. **Operation context**: Extract operatorId from context; permission check
-3. **Create/Load aggregate through Factory**: use `Factory.create(...)` to create a new domain object from attributes, and `Factory.createByNum(...)` to load/build an existing domain object by business code; application must not directly `new` domain objects or call static `create` construction methods
-4. **Invoke domain action or Gateway**: E.g., aggregate.record(...), aggregate.close(...), CategorySuggestGateway.suggest(...)
-5. **Persist/Publish event**: Repository.save, DomainEventPublisher.publish; mark @Transactional if needed
-6. **Assemble return**: Construct VO, Result return
+3. **Query through QueryService when needed**: If the use case needs reads or validation data, call the corresponding domain's QueryService; do NOT inject/call Repository from application
+4. **Build aggregate through Factory**: use only `Factory.create(...)` to build a new domain object from attributes, and `Factory.createByNum(...)` to build an existing domain object by business code; Factory must not contain `createById(...)`, `rebuild(...)`, or other methods; application must not directly `new` domain objects or call static `create` construction methods
+5. **Invoke domain action or Gateway**: E.g., aggregate.record(...), aggregate.close(...), CategorySuggestGateway.suggest(...)
+6. **Persist/Publish event**: performed inside domain actions through domain object dependencies; mark @Transactional on application method if needed
+7. **Assemble return**: Construct client DTO or business identifier return
 
 **Example (FamilyCommandService.createFamily sequence)**:
 
@@ -25,14 +27,16 @@ For each method, write execution steps (Mermaid sequenceDiagram or ordered list)
 |------|-------------|-----------|
 | 1 | Validate: name, ownerId non-null | — |
 | 2 | Operator: operatorId from context; verify consistency with ownerId or admin role | — |
-| 3 | Verify: ownerId user exists | UserRepository.findById(ownerId) |
-| 4 | Create family aggregate through Factory: familyFactory.create(name, ownerId) | FamilyFactory |
-| 5 | Persist & publish event | FamilyRepository.save; DomainEventPublisher.publish(FAMILY_CREATED) |
-| 6 | Return: family id or FamilyVO | Result<String> or Result<FamilyVO> |
+| 3 | Verify: owner exists through UserQueryService | UserQueryService.existsByNum(ownerNum) |
+| 4 | Create family aggregate through Factory: familyFactory.create(name, ownerNum) | FamilyFactory |
+| 5 | Invoke domain action: family.save(operatorId) | Family aggregate handles persistence/event internally |
+| 6 | Return: family num or client DTO | String or client DTO |
 
 ---
 
-## Adapter Layer (Controller) Design
+## Adapter Layer (External Entry) Design
+
+Adapter is the external trigger entry layer. It includes HTTP controllers, scheduled jobs, event/MQ listeners, and adapter-level configuration.
 
 ### Controller Interface Checklist
 
@@ -42,14 +46,34 @@ For each controller (CommandController, QueryController), specify:
 - **Output**: Result<VO>, Result<List<VO>>, etc.
 - **Responsibility**: Which use case or Service method it calls
 
-### Interface Sequence Logic
+### Scheduled Job Checklist
 
-For each HTTP endpoint (Mermaid sequenceDiagram or ordered list):
-1. **Receive request**: Deserialize request body/params; bind Param
-2. **Authentication & operator**: Validate JWT; extract current userId as operatorId; return 401 if not logged in
+For each scheduled job, specify:
+- **Job name**: Clear business name
+- **Trigger**: cron/fixed delay/manual trigger
+- **Idempotency**: idempotent key or duplicate handling
+- **Concurrency control**: single-node/multi-node lock strategy
+- **Application call**: Which CommandService/QueryService method it calls
+- **Failure handling**: retry, alert, compensation
+
+### Event/MQ Listener Checklist
+
+For each listener, specify:
+- **Source**: MQ topic/tag, event type, subscription group
+- **Payload**: message schema or event DTO
+- **Idempotency**: message key, consumed log, duplicate handling
+- **Retry/DLQ**: retry count, dead-letter queue, manual compensation
+- **Application call**: Which CommandService/QueryService method it calls
+- **Failure handling**: exception strategy and alerting
+
+### Entry Sequence Logic
+
+For each adapter entry (Mermaid sequenceDiagram or ordered list):
+1. **Receive trigger**: HTTP request, scheduler tick, MQ/event message
+2. **Authentication/context**: Validate JWT or build system operator/context when applicable
 3. **Basic validation**: Non-null, format checks (or delegate to Service)
-4. **Call application layer**: Call CommandService/QueryService with Param and operatorId
-5. **Assemble response**: Wrap Service return in Result.success(data); exception → Result.fail(error_code) or global exception handler
+4. **Call application layer**: Call CommandService/QueryService with ParamDTO and operator/context
+5. **Acknowledge/respond**: Return Result for HTTP, complete job, ACK/NACK message; exception → Result.fail/retry/DLQ/alert
 
 **HTTP Method Convention**: Only **GET** (read) and **POST** (create/update/delete); NO PUT, DELETE, PATCH
 
@@ -112,12 +136,12 @@ For each HTTP endpoint (Mermaid sequenceDiagram or ordered list):
 
 | Layer | Change Items | Corresponding Skill |
 |-------|--------------|------------------|
-| facade | DomainEventConstant, DomainEntity updates, DomainEventDTO | impl-facade-module |
-| client | New Param, DTO, VO, Result, API contracts, constants | impl-client-module |
+| facade | DomainEntity, DomainEventDTO, DomainEventPublisher, Result/CommonRequest/common contracts | impl-facade-module |
+| client | New ParamDTO, DTO, VO, Result, API contracts, constants | impl-client-module |
 | domain | Aggregates, entities, Repository/Factory/Gateway **interfaces**, ValueObjects, domain events | impl-domain-module |
 | infra | Entities, Mappers, Repository/Factory/Gateway **implementations**, common/constant/event/util/client | impl-infra-module |
 | application | CommandService, QueryService, StreamService, config/hook/interceptor/service/tool | impl-application-module |
-| adapter | Controller, listener, config (BaseController, GlobalExceptionHandler, TokenFilter) | impl-adapter-module |
+| adapter | Controller, Scheduler/Job, Listener, config (BaseController, GlobalExceptionHandler, TokenFilter) | impl-adapter-module |
 
 ---
 

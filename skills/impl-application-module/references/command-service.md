@@ -14,6 +14,8 @@ package BASE_PACKAGE.application.conversation;
 import BASE_PACKAGE.client.conversation.dto.ConversationCreateParamDTO;
 import BASE_PACKAGE.client.conversation.dto.ConversationDeleteParamDTO;
 import BASE_PACKAGE.client.conversation.dto.ConversationUpdateParamDTO;
+import BASE_PACKAGE.client.user.dto.UserExistsParamDTO;
+import BASE_PACKAGE.application.user.UserQueryService;
 import BASE_PACKAGE.domain.conversation.Conversation;
 import BASE_PACKAGE.domain.conversation.factory.ConversationFactory;
 import jakarta.annotation.Resource;
@@ -30,8 +32,16 @@ public class ConversationCommandService {
     @Resource
     private ConversationFactory conversationFactory;
 
+    @Resource
+    private UserQueryService userQueryService;
+
     @Transactional(rollbackFor = Exception.class)
     public String createConversation(ConversationCreateParamDTO param) {
+        UserExistsParamDTO existsParam = new UserExistsParamDTO();
+        existsParam.setUserNum(param.getUserNum());
+        if (!userQueryService.existsByNum(existsParam)) {
+            throw new IllegalArgumentException("用户不存在");
+        }
         Conversation conversation = conversationFactory.create(param.getTitle());
         conversation.save(param.getOperatorId());
         return conversation.getNum();
@@ -70,6 +80,7 @@ import lombok.Data;
 @Data
 public class ConversationCreateParamDTO {
     private String title;
+    private String userNum;
     private String operatorId;
 }
 ```
@@ -108,12 +119,13 @@ public class ConversationDeleteParamDTO {
 ## 关键点
 
 1. **仅依赖 domain 的 Factory**：不直接创建实体，而是通过 Factory 创建或加载；新建使用 `create(...)`，按业务编码加载使用 `createByNum(...)`；禁止直接 `new` 领域对象或直接调用领域对象静态 `create` 方法
-2. **调用实体行为**：通过 `conversation.save()`、`conversation.updateTitle()` 等方法执行业务逻辑
-3. **事务边界**：在 application 方法上使用 `@Transactional(rollbackFor = Exception.class)`
-4. **不含领域规则**：领域规则应在 domain 层实现，application 仅做编排
-5. **操作人信息传入**：不从上下文获取，由 adapter 组装到 ParamDTO 中传入
-6. **所有入参使用 ParamDTO 类**：禁止使用零散的 String、Long 等原始类型作为方法参数
-7. **ParamDTO 定义在 client 层**：命名规则为 `XXXParamDTO`，按语义对应（Create/Update/Delete/Query）
+2. **禁止依赖 Repository**：CommandService 不注入、不调用 Repository；如需查询/校验数据，调用对应领域的 QueryService（如 `UserQueryService.existsByNum`）
+3. **调用实体行为**：通过 `conversation.save()`、`conversation.updateTitle()` 等方法执行业务逻辑
+4. **事务边界**：在 application 方法上使用 `@Transactional(rollbackFor = Exception.class)`
+5. **不含领域规则**：领域规则应在 domain 层实现，application 仅做编排
+6. **操作人信息传入**：不从上下文获取，由 adapter 组装到 ParamDTO 中传入
+7. **所有入参使用 ParamDTO 类**：禁止使用零散的 String、Long 等原始类型作为方法参数
+8. **ParamDTO 定义在 client 层**：命名规则为 `XXXParamDTO`，按语义对应（Create/Update/Delete/Query）
 
 ## 与 domain 的交互流程
 

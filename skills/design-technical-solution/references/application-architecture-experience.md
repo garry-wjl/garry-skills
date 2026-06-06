@@ -1,0 +1,159 @@
+# 应用架构设计经验
+
+应用架构用于描述需求在系统内部如何落地，重点回答：**有哪些模块、如何分层、包如何组织、模块如何调用、与现有代码如何衔接**。
+
+## 设计目标
+
+应用架构不是泛泛而谈的系统介绍，而是为了让后续 `impl-*-module` 技能可以直接落码。因此应用架构必须具备：
+
+1. **分层清晰**：明确 facade / client / domain / infra / application / adapter 的职责边界。
+2. **领域清晰**：按业务领域或子域组织包结构，避免技术维度优先。
+3. **依赖清晰**：说明模块之间的调用方向，不出现逆向依赖。
+4. **复用清晰**：若已有相似代码，说明复用点、扩展点与避免重复建设的策略。
+5. **实现可追踪**：应用架构中的包、类、接口应能对应到模块变更清单与实现顺序。
+
+## 强规约
+
+以下规则属于硬性约束，生成技术方案时必须遵守，不得与「常见设计经验」混淆。
+
+1. **必须包含代码结构表**：应用架构必须包含代码结构四列表格：**层、领域、包、职责**。
+2. **必须明确命令/查询调用链**：模块调用关系必须明确区分命令类控制/调用与查询类控制/调用。
+3. **无法判断必须确认**：如果无法从 PRD 或上下文判断某个接口/用例属于命令类还是查询类，必须向用户确认，不得自行猜测。
+4. **禁止逆向依赖**：不得出现 domain 依赖 application / adapter / client / infra 等逆向依赖。
+5. **application 禁止调用 Repository**：application 层禁止注入或调用 domain Repository；查询需求必须通过对应领域 QueryService 暴露。
+6. **CommandService 必须通过 Factory 获取领域对象**：新增领域对象使用 `create(...)`，按业务编码加载既有对象使用 `createByNum(...)`。
+7. **QueryService 只做查询**：QueryService 可注入 infra Mapper 做只读查询并返回 client DTO，不执行写操作。
+8. **adapter 必须覆盖所有外部触发入口**：adapter 不仅包含 HTTP Controller，还必须承载定时任务入口（Scheduler/Job）、事件监听入口（MQ Listener、Event Listener）和必要配置类。
+9. **架构设计必须能映射到模块变更清单**：应用架构中出现的层、领域、包，必须能在模块变更清单中找到对应变更项。
+
+## 必选内容
+
+### 1. 代码结构表
+
+代码结构必须使用四列表格：
+
+| 层 | 领域 | 包 | 职责 |
+|----|------|----|------|
+| facade | common | `com.xxx.facade.domain` | 通用领域基类、事件对象、Result 等 |
+| client | user | `com.xxx.client.user.dto` | 用户相关 ParamDTO / DTO / VO |
+| domain | user | `com.xxx.domain.user` | 用户聚合根、领域动作、领域事件 |
+| infra | user | `com.xxx.infra.user.repository` | 用户仓储实现、实体转换 |
+| application | user | `com.xxx.application.user` | 用户 CommandService / QueryService |
+| adapter | user | `com.xxx.adapter.rest.user` | 用户 HTTP Controller |
+| adapter | user | `com.xxx.adapter.scheduler.user` | 用户相关定时任务入口 |
+| adapter | user | `com.xxx.adapter.listener.user` | 用户相关事件监听入口 |
+
+### 2. 模块调用关系
+
+应说明关键调用链，并明确每条调用链属于**命令类控制/调用**还是**查询类控制/调用**：
+
+- **命令类控制/调用**：通常由 `CommandController`、`Scheduler/Job`、`MQ Listener/Event Listener` 等外部触发入口，调用 `CommandService`，用于新增、修改、删除、提交、审核、触发任务、消费事件等会改变状态的用例。
+- **查询类控制/调用**：通常由 `QueryController` 入口，调用 `QueryService`，用于列表、详情、统计、校验存在性等只读用例。
+- 如果无法从 PRD 或上下文判断某个接口/用例属于命令类还是查询类，必须向用户确认，不得自行猜测。
+
+例如：
+
+```text
+命令类（HTTP）：CommandController → CommandService → Factory → Domain Object → Repository → Mapper → DB
+命令类（定时）：Scheduler/Job → CommandService → Factory → Domain Object → Repository → Mapper → DB
+命令类（事件）：MQ Listener/Event Listener → CommandService → Factory → Domain Object → Repository → Mapper → DB
+查询类：QueryController → QueryService → Mapper → DB → DTO → QueryController
+```
+
+注意：
+
+- Adapter 是外部触发入口层，除 Controller 外，还包括 Scheduler/Job、MQ Listener、Event Listener。
+- CommandService 通过 Factory 创建或加载领域对象。
+- CommandService 不直接调用 Repository。
+- 查询需求通过对应领域 QueryService 提供。
+- QueryService 可通过 infra Mapper 做只读查询，并返回 client DTO。
+
+### 3. 分层依赖关系
+
+默认依赖方向：
+
+```text
+adapter → application → domain
+application → infra（仅 QueryService 只读 Mapper / infra 实现注入）
+infra → domain
+application → client
+adapter → client
+```
+
+### 4. 同步/异步边界
+
+如果涉及异步流程，应说明：
+
+| 场景 | 同步/异步 | 触发方 | 消费方 | 说明 |
+|------|-----------|--------|--------|------|
+| 创建订单后发通知 | 异步 | OrderDomainEvent | NotificationListener | 降低主流程耗时 |
+| 查询列表 | 同步 | QueryController | QueryService | 直接返回 DTO |
+
+### 5. 与现有代码关系
+
+如果仓库中已有类似实现，必须写清楚：
+
+- 复用哪些包、类、接口
+- 修改哪些已有类
+- 新增哪些类
+- 是否需要迁移旧实现
+- 是否存在兼容逻辑
+
+## 常见设计经验
+
+### 经验 1：先按业务领域划分，再映射到六层
+
+不要先从 Controller 或表出发设计。建议顺序：
+
+```text
+业务领域 → 聚合/实体 → 领域动作 → 应用用例 → 接口 → 表结构
+```
+
+### 经验 2：应用架构必须能指导模块变更清单
+
+应用架构中出现的层、领域、包，应该在「模块变更清单」中能找到对应变更项。
+
+### 经验 3：查询和命令分开
+
+应用层一般按领域拆成：
+
+- `*CommandService`：写操作，调用 Factory 与领域对象。
+- `*QueryService`：读操作，注入 Mapper 查询并转 DTO。
+
+### 经验 4：不要让 Repository 变成 application 查询入口
+
+Repository 的目的不是给 application 做查询，而是领域对象持久化协作。application 查询需求应通过 QueryService。
+
+错误示例：
+
+```text
+CommandService → UserRepository.findByNum
+```
+
+正确示例：
+
+```text
+CommandService → UserQueryService.existsByNum
+```
+
+### 经验 5：应用架构不要只写包结构
+
+仅有代码结构表是不够的。还应补充：
+
+- 模块调用关系
+- 关键依赖方向
+- 同步/异步边界
+- 与现有代码复用关系
+
+## 自检清单
+
+- [ ] 是否包含代码结构四列表格（层、领域、包、职责）？
+- [ ] 是否说明关键模块调用关系，并明确区分命令类控制/调用与查询类控制/调用？
+- [ ] adapter 入口是否覆盖 HTTP Controller、定时任务、事件监听等外部触发方式？
+- [ ] 对无法判断命令/查询归属的接口或用例，是否已向用户确认？
+- [ ] 是否说明同步/异步边界？
+- [ ] 是否说明与现有代码的复用和扩展关系？
+- [ ] 是否不存在逆向依赖？
+- [ ] application 是否未直接调用 Repository？
+- [ ] 查询需求是否通过 QueryService 暴露？
+- [ ] 应用架构是否能映射到模块变更清单？
