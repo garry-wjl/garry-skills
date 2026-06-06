@@ -51,8 +51,8 @@ public class ConversationEntity {
 
 - Inject **only** ConversationRepository (aggregate's own Mapper).
 - **Never** inject DomainEventPublisher; **never** inject any **Gateway**.
-- Generally implement two core methods: `create(...)` builds a new domain object from attributes; `createByNum` delegates only to `conversationRepository.findByNum(num)` to load/build the existing domain object by business code.
-- If domain needs Gateway/Publisher still: **application layer after factory/repository returns, set it**, or adjust domain construction; **RepositoryImpl never injects or references these two bean types** (see SKILL rule 8).
+- Implement exactly two methods only: `create(...)` builds a new domain object from attributes; `createByNum` delegates only to `conversationRepository.findByNum(num)` to load/build the existing domain object by business code. No `createById(...)`, `rebuild(...)`, or other Factory methods are allowed.
+- If domain needs Gateway/Publisher still: **application layer after Factory returns, set it**, or adjust domain construction; application must not call Repository directly; **RepositoryImpl never injects or references these two bean types** (see SKILL rule 8).
 
 Path: `infra/conversation/factory/ConversationFactoryImpl.java`
 
@@ -88,7 +88,7 @@ public class ConversationFactoryImpl implements ConversationFactory {
 
 - Inject **only** ConversationMapper (and aggregate's sub-table Mappers). **Absolutely NO** DomainEventPublisher, ApplicationEventPublisher, any **Gateway**, other domain Mapper, other Repository or non-Mapper beans.
 - **Existence check**: Query DB via business ID `num` (selectOne/selectCount with `num = ?`); **has record = exists, no record = not exists**; don't use main key id alone (unless domain explicitly states).
-- `findByNum(num)`: Query Entity by `num`, convert to domain; not found → return `null`.
+- `findByNum(num)`: Query Entity by `num`, convert to domain; not found → return `null`. This method is for domain object / Factory collaboration only, not an application-layer query API.
 - `save/delete`: Entity ↔ domain conversion only in repository.
 
 Skeleton (only ConversationMapper injected; Lambda query needs `import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper`):

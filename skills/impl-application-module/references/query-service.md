@@ -83,32 +83,29 @@ public class ConversationQueryParamDTO {
 4. **不含业务逻辑**：仅做数据查询和转换，复杂业务逻辑应在 domain 实现
 5. **支持分页/排序**：通过 QueryWrapper 灵活处理查询条件
 6. **所有入参使用 ParamDTO 类**：禁止使用零散的 String、Long、int 等原始类型作为方法参数
-7. **DTO vs VO**：
+7. **禁止 Repository**：QueryService 也不注入、不调用 domain Repository；查询通过 infra Mapper 完成，Repository 仅供领域层内部使用
+8. **DTO vs VO**：
    - **DTO**：由 client 层定义，用于跨层传输数据（application ↔ adapter），不包含展示逻辑
    - **VO**：由 adapter 层从 DTO 转换而来，用于最终返回给客户端，包含展示相关的字段和逻辑（adapter → client）
 
-## 替代方案：通过 domain Repository 查询
+## 跨领域查询约定
 
-如果希望读操作也经过 domain 层，可改为注入 domain 的 Repository 接口：
+如果 CommandService 或其他 application 服务需要查询本领域或其他领域数据，必须调用对应领域的 QueryService 方法，不允许注入或调用 domain Repository。例如：
 
 ```java
 @Service
-public class ConversationQueryService {
+public class ConversationCommandService {
 
     @Resource
-    private ConversationRepository conversationRepository;  // domain Repository 接口
+    private UserQueryService userQueryService;
 
-    public List<ConversationListDto> findByUserId(ConversationQueryParamDTO param) {
-        List<Conversation> conversations = conversationRepository.findByUserId(param.getUserId(), param.getPageNum(), param.getPageSize());
-        return conversations.stream().map(this::toDto).collect(Collectors.toList());
-    }
-
-    private ConversationListDto toDto(Conversation conversation) {
-        ConversationListDto dto = new ConversationListDto();
-        dto.setId(conversation.getNum());
-        dto.setSessionTitle(conversation.getTitle());
-        // ... 其他字段
-        return dto;
+    public void createConversation(ConversationCreateParamDTO param) {
+        UserExistsParamDTO existsParam = new UserExistsParamDTO();
+        existsParam.setUserNum(param.getUserNum());
+        if (!userQueryService.existsByNum(existsParam)) {
+            throw new IllegalArgumentException("用户不存在");
+        }
+        // 后续通过 Factory 创建领域对象并调用领域行为
     }
 }
 ```
@@ -136,4 +133,5 @@ Client VO (return to frontend)
 - ❌ **不返回领域对象**：application 层不能暴露 domain 对象
 - ❌ **不在 application 层定义 DTO**：DTO 必须定义在 client 层
 - ❌ **不使用零散原始类型作入参**：所有入参必须使用 client 层定义的 XXXParamDTO 类
+- ❌ **不注入或调用 domain Repository**：查询通过 QueryService + infra Mapper 暴露给 application
 - ✅ **仅返回 client 层定义的 DTO**：application 层唯一允许的返回类型

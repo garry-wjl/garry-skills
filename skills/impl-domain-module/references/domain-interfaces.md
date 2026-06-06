@@ -4,7 +4,7 @@
 
 Path: `domain/conversation/repository/ConversationRepository.java`
 
-Repository **MUST and ONLY** have three methods (names & signatures fixed): **save**, **findByNum**, **deleteByNum**. No fourth method, no `build*By`, `findById`, `delete` aliases.
+Repository **MUST and ONLY** have three methods (names & signatures fixed): **save**, **findByNum**, **deleteByNum**. No fourth method, no `build*By`, `findById`, `delete` aliases. Repository is for domain object / Factory / infra implementation collaboration only; application services must not inject or call Repository.
 
 ```java
 package BASE_PACKAGE.domain.conversation.repository;
@@ -24,7 +24,7 @@ public interface ConversationRepository {
 
 Path: `domain/conversation/factory/ConversationFactory.java`
 
-Generally two core methods: **create**, **createByNum**. `create(...)` builds a new domain object from attributes. **createByNum(String num)** in infra implementation **MUST only delegate** to repository's **findByNum(num)** to load/build the existing domain object by business code; no other repository calls allowed. Other methods only when explicitly required by the technical plan.
+Factory **MUST contain exactly two methods only**: **create**, **createByNum**. Both methods build domain objects. `create(...)` builds a new domain object from attributes. **createByNum(String num)** in infra implementation **MUST only delegate** to repository's **findByNum(num)** to load/build the existing domain object by business code. No `createById(...)`, `rebuild(...)`, or other Factory methods are allowed.
 
 ```java
 package BASE_PACKAGE.domain.conversation.factory;

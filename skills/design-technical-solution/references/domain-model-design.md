@@ -79,7 +79,7 @@ classDiagram
 ### Factory Requirements
 
 - **Every aggregate root MUST have a corresponding `*Factory` interface** in the domain layer.
-- Domain object creation and loading **MUST go through Factory**.
+- Domain object construction **MUST go through Factory**.
 - Application layer **MUST NOT** directly `new` domain objects.
 - Application layer **MUST NOT** directly call domain object static `create` methods to construct objects.
 - Infra layer implements the Factory interface and may depend on Entity/Mapper/Repository implementation details.
@@ -89,18 +89,19 @@ classDiagram
 For each Factory, specify:
 
 1. **Factory name**: e.g., `ConversationFactory`, `OrderFactory`
-2. **Method signature**: generally two default methods: `create(...)` and `createByNum(...)`
+2. **Method signature**: exactly two methods only: `create(...)` and `createByNum(...)`
 3. **Input parameters**: business attributes for `create(...)`; business code `num` for `createByNum(...)`
 4. **Return type**: aggregate root or entity
-5. **Responsibility**: `create(...)` builds a new domain object from attributes; `createByNum(...)` loads data through Repository by business code and builds the existing domain object
+5. **Responsibility**: both methods build domain objects; `create(...)` builds a new domain object from attributes; `createByNum(...)` loads data through Repository by business code and builds the existing domain object
 6. **Dependencies**: Repository/Gateway/Mapper/Entity converters used by infra implementation
+7. **Forbidden methods**: do NOT design `createById(...)`, `rebuild(...)`, or any other Factory methods
 
 **Example (Factory Method Table)**:
 
 | Factory | Method | Params | Return | Responsibility | Dependencies |
 |---------|--------|--------|--------|----------------|--------------|
-| ConversationFactory | create | title, creatorId | Conversation | Create a new Conversation aggregate from attributes with initial state | NumGenerator |
-| ConversationFactory | createByNum | conversationNum | Conversation | Load data through Repository by business code and build existing domain object | ConversationRepository |
+| ConversationFactory | create | title, creatorId | Conversation | Build a new Conversation domain object from attributes | NumGenerator |
+| ConversationFactory | createByNum | conversationNum | Conversation | Load data through Repository by business code and build existing Conversation domain object | ConversationRepository |
 
 ---
 
@@ -168,7 +169,8 @@ Value objects **reduce entity attribute bloat** and **centralize validation logi
 
 - [ ] Each **aggregate root** and **entity** has basic attributes: id, num, create_no, update_no (value objects excluded)
 - [ ] Each aggregate root has a corresponding **Factory interface** in the domain layer
-- [ ] Domain object creation/loading goes through Factory; application does not directly `new` domain objects or call static `create` construction methods
+- [ ] Domain object construction goes through Factory; application does not directly `new` domain objects or call static `create` construction methods
+- [ ] Each Factory contains exactly two methods only: `create(...)` and `createByNum(...)`; no `createById(...)`, `rebuild(...)`, or other methods
 - [ ] Each aggregate root and persistent entity has **save(…, operatorId)** and **delete(…, operatorId)**
 - [ ] **ALL** domain actions include **operatorId parameter**
 - [ ] Each aggregate has clear **aggregate root**; boundary has only one root per aggregate
