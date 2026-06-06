@@ -37,8 +37,8 @@ flowchart LR
     User[用户浏览器] --> CDN[CDN/静态资源入口]
     CDN --> Web[前端 Web 应用]
     Web --> Gateway[API Gateway/Nginx]
-    Gateway --> App1[Java Application 实例 1]
-    Gateway --> App2[Java Application 实例 2]
+    Gateway --> App1[Java 应用 实例 1]
+    Gateway --> App2[Java 应用 实例 2]
     App1 --> CloudDB[(云数据库 MySQL)]
     App1 --> CloudRedis[(云 Redis)]
     App2 --> CloudDB
@@ -51,7 +51,7 @@ flowchart LR
 
 | 应用 | 类型 | 部署方式 | 实例数量 | 访问入口 | 是否新增 | 说明 |
 |------|------|----------|----------|----------|----------|------|
-| Java Application | 后端服务 | ECS / K8s / 云应用平台 | 2 | `/api/**` | 否/是 | 支持水平扩容 |
+| Java 应用 | 后端服务 | ECS / K8s / 云应用平台 | 2 | `/api/**` | 否/是 | 支持水平扩容 |
 | Admin Web | 前端应用 | CDN + 静态托管 / Nginx | 1 | `https://admin.xxx.com` | 否/是 | 管理端 |
 | H5 Web | 前端应用 | CDN + 静态托管 | 1 | `https://m.xxx.com` | 否/是 | 移动端 |
 
@@ -61,11 +61,11 @@ flowchart LR
 
 | 云服务 | 用途 | 连接方 | 变更 |
 |--------|------|--------|------|
-| 云数据库 MySQL | 持久化业务表 | Java Application | 新增表/字段/索引 |
-| 云 Redis | 缓存、幂等、分布式锁 | Java Application | 新增 key 规则 |
-| 云 MQ | 异步事件消费 | Java Application / Listener | 新增 topic/tag |
-| 云对象存储 | 文件存储 | Java Application / Frontend | 新增 bucket/path |
-| 第三方服务 | 外部能力 | Java Application | 新增配置/鉴权 |
+| 云数据库 MySQL | 持久化业务表 | Java 应用 | 新增表/字段/索引 |
+| 云 Redis | 缓存、幂等、分布式锁 | Java 应用 | 新增 key 规则 |
+| 云 MQ | 异步事件消费 | Java 应用 / 监听器 | 新增 topic/tag |
+| 云对象存储 | 文件存储 | Java 应用 / 前端 | 新增 bucket/path |
+| 第三方服务 | 外部能力 | Java 应用 | 新增配置/鉴权 |
 
 ### 4. 配置项
 
@@ -140,7 +140,7 @@ flowchart LR
 
 ### 经验 3：部署架构要和模块变更清单对应
 
-如果模块变更清单中有 adapter listener、定时任务、第三方 SDK、前端 UI 工程等，部署架构中应体现相应应用入口或前端入口。
+如果模块变更清单中有 适配层监听器、定时任务、第三方 SDK、前端 UI 工程等，部署架构中应体现相应应用入口或前端入口。
 
 ### 经验 4：部署不变就不要展开
 
