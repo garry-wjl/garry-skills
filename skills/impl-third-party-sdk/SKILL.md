@@ -19,7 +19,7 @@ description: Selects and introduces third-party SDKs for a six-layer Java (Maven
 ## 流程
 
 1. **理解需求**：根据用户描述（如「数据库」「缓存」「API 文档」「参数校验」「邮件」）确定需要的 SDK 类型。
-2. **查清单**：在 [reference.md](reference.md) 的「可选 SDK 清单」中查找匹配项，确认**名称、版本、可引入模块**。
+2. **查清单**：在 [references/sdk-checklist.md](references/sdk-checklist.md) 的「可选 SDK 清单」中查找匹配项，确认**名称、版本、可引入模块**。
 3. **根 pom**：若该 SDK 尚未在根 pom 的 `dependencyManagement` 中声明，则在根 pom 的 `properties` 中增加版本变量，在 `dependencyManagement` 中增加对应 `<dependency>`（含版本）。
 4. **模块 pom**：在**允许使用该 SDK 的模块**的 `dependencies` 中增加 `<dependency>`（**不写 version**，由根统一管理）。
 
@@ -47,5 +47,5 @@ description: Selects and introduces third-party SDKs for a six-layer Java (Maven
 
 ## Reference
 
-- **可选 SDK 清单**（名称、用途、版本、可引入模块、Maven 片段）：[reference.md](reference.md)。
+- **可选 SDK 清单**（名称、用途、版本、可引入模块、Maven 片段）：[references/sdk-checklist.md](references/sdk-checklist.md) 和 [references/sdk-integration-guide.md](references/sdk-integration-guide.md)。
 - 与各模块依赖约定一致的总表可另见 [module-dependencies.md](../module-dependencies.md)。

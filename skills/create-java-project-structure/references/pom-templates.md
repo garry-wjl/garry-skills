@@ -1,4 +1,4 @@
-# Reference: POM Templates and Optional package-info
+# POM Templates and Configuration
 
 Replace placeholders:
 
@@ -277,18 +277,3 @@ infra 除 **domain** 外，仅引入**存储（数据库）**与**缓存**相关
     </dependencies>
 </project>
 ```
-
----
-
-## 8. Optional package-info.java (for empty modules to compile)
-
-If you want `mvn compile` to succeed without adding business code, add one `package-info.java` per module under the module’s base package. Example for `facade` (package BASE_PACKAGE.facade):
-
-```java
-/**
- * Facade - interface definitions.
- */
-package BASE_PACKAGE.facade;
-```
-
-Do the same for `BASE_PACKAGE.domain`, `BASE_PACKAGE.infra`, `BASE_PACKAGE.client`, `BASE_PACKAGE.application`, `BASE_PACKAGE.adapter`. No other .java files.

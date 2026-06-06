@@ -18,7 +18,7 @@ description: Produces technical solution documents from PRD input, structured fo
 
 **在开始编写技术方案之前，必须向使用者提出至少 10 个与设计技术方案相关的问题**，并基于使用者的回答再开始工作。不得在未完成提问与回答的前提下直接输出完整技术方案。
 
-- 问题应覆盖：业务边界与优先级、涉及模块/领域、与现有功能的关系、接口与数据约定、非功能要求（性能、安全、兼容）等。可参考 [reference.md](reference.md) 中的「技术方案设计前必问问题清单」。
+- 问题应覆盖：业务边界与优先级、涉及模块/领域、与现有功能的关系、接口与数据约定、非功能要求（性能、安全、兼容）等。可参考 [design-questions.md](references/design-questions.md) 中的「技术方案设计前必问问题清单」。
 - 得到回答后，将共识要点简要写入技术方案的「目标与范围」或「其他」中，再展开模块变更清单与实现顺序。
 
 ## 复杂 PRD：拆解为低耦合子需求
@@ -77,7 +77,7 @@ description: Produces technical solution documents from PRD input, structured fo
    - **领域事件**（如 3.x.4）  
      - 使用**表格**列出本领域涉及的领域事件，列：事件名、触发时机、载荷要点、可订阅方/用途。
 
-   在「领域模型设计」章首可保留 **3.1 业务层级划分**（表格列出层级与业务/子域说明），再按业务领域分节。详见 [reference.md](reference.md) 中「领域模型设计：领域类图与领域动作」及「**领域对象设计规范（专业版）**」小节。
+   在「领域模型设计」章首可保留 **3.1 业务层级划分**（表格列出层级与业务/子域说明），再按业务领域分节。详见 [domain-model-design.md](references/domain-model-design.md) 中「领域模型设计：领域类图与领域动作」及「**领域对象设计规范（专业版）**」小节。
 
 4. **应用层设计（必选，当方案涉及 application 层时）**  
    与**领域模型设计**一致：**先根据业务层级/业务模块划分，再按具体模块编写**；模块与「领域模型设计」中的业务领域（如 3.2 用户、3.3 家庭、3.4 账本）一一对应，便于与 impl-application-module 落码对齐。  
@@ -86,7 +86,7 @@ description: Produces technical solution documents from PRD input, structured fo
    - **三级目录**：每个业务模块下包含——**Service 方法清单**（本模块的 Service、方法签名、职责、入参/出参）、**方法时序逻辑**（本模块关键方法的执行步骤或时序图）。  
    - 示例：`4.2 用户（user）` → `4.2.1 Service 方法清单`、`4.2.2 方法时序逻辑`；`4.3 家庭（family）` → `4.3.1 Service 方法清单`、`4.3.2 方法时序逻辑`；跨模块或公共的 Service（如导入、统计、公众号绑定）可单独成节（如 4.x 导入（import）、4.x 统计（stats））。  
    - **方法时序逻辑**内容要求：**设计出的所有 Service 方法都须有时序图**描述实现逻辑；每个方法配一张 Mermaid sequenceDiagram（或等价图），表达步骤顺序（如 1. 参数校验 2. 解析操作人/鉴权 3. 加载聚合或 Repository 4. 调用领域动作或 Gateway 5. 持久化/发布事件 6. 组装返回）；跨 Service 调用、事务边界须标明。  
-   详见 [reference.md](reference.md) 中「**应用层设计：Service 方法与时序逻辑**」小节。
+   详见 [implementation-layers.md](references/implementation-layers.md) 中「**应用层设计：Service 方法与时序逻辑**」小节。
 
 5. **控制器/Adapter 层设计（必选，当方案涉及 adapter 层时）**  
    与**领域模型设计**一致：**先根据业务层级/业务模块划分，再按具体模块编写**；模块与「领域模型设计」及「应用层设计」中的业务模块对应，便于 **impl-adapter-module** 落码。  
@@ -97,17 +97,17 @@ description: Produces technical solution documents from PRD input, structured fo
    - **二级目录**：先 **5.1 业务模块划分**（表格列出本方案涉及的 Controller/模块，与 4.x 应用层模块对应），再按**业务模块**分节（如 5.2 认证（auth）、5.3 家庭（family）等）。  
    - **三级目录**：每个业务模块下包含——**Controller 接口清单**（本模块的 GET/POST、路径、入参/出参 **JSON 描述**、职责）、**接口时序逻辑**（**每个接口**须配有时序图描述实现逻辑）。  
    - **接口时序逻辑**内容要求：**设计出的所有 API 接口都须有时序图**描述请求处理逻辑；每个接口配一张 Mermaid sequenceDiagram（Client→Controller→Service）；步骤含：接收请求/反序列化、鉴权/取 operatorId、参数校验、调用 Application Service、封装 Result 返回；异常与错误码映射可一并说明。  
-   详见 [reference.md](reference.md) 中「**控制器设计：接口与时序逻辑**」小节。
+   详见 [implementation-layers.md](references/implementation-layers.md) 中「**控制器设计：接口与时序逻辑**」小节。
 
 6. **数据库设计（必选）**  
    须包含**数据库设计**模块，明确持久化方案，便于 **impl-infra-module** 落表与 Mapper。
-   - **主键 id（强制）**：每张业务表的主键 **`id` 必须为 `BIGINT` 类型，且使用数据库自增**（如 MySQL：`BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY`）。**禁止**将主键 `id` 设计为 `VARCHAR/UUID` 等非整型自增方案（对外业务编号仍用 **`num`** 等独立字段 + 唯一索引）。领域层/Java 实体中与之对应的标识类型建议 **`Long`**。详见 [reference.md](reference.md)「数据库设计模块」。
-   - **创建/更新时间（强制）**：须具备 **`create_time`（创建时间）**、**`update_time`（最后更新时间）** 两列；**禁止**使用 `created_at`、`updated_at` 等其它命名。时间类型**必须精确到毫秒**（如 MySQL：`DATETIME(3)`；PostgreSQL：`TIMESTAMP(3)`；DDL 与表结构描述须一致）。详见 [reference.md](reference.md)「数据库设计模块 → 时间字段约定」。
+   - **主键 id（强制）**：每张业务表的主键 **`id` 必须为 `BIGINT` 类型，且使用数据库自增**（如 MySQL：`BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY`）。**禁止**将主键 `id` 设计为 `VARCHAR/UUID` 等非整型自增方案（对外业务编号仍用 **`num`** 等独立字段 + 唯一索引）。领域层/Java 实体中与之对应的标识类型建议 **`Long`**。详见 [implementation-layers.md](references/implementation-layers.md)「数据库设计模块」。
+   - **创建/更新时间（强制）**：须具备 **`create_time`（创建时间）**、**`update_time`（最后更新时间）** 两列；**禁止**使用 `created_at`、`updated_at` 等其它命名。时间类型**必须精确到毫秒**（如 MySQL：`DATETIME(3)`；PostgreSQL：`TIMESTAMP(3)`；DDL 与表结构描述须一致）。详见 [implementation-layers.md](references/implementation-layers.md)「数据库设计模块 → 时间字段约定」。
    - **表结构**：列出主要表名、字段（含类型、是否必填、索引）、主键与外键或逻辑关联；若有枚举/字典表一并列出。
    - **DDL 语句（强制）**：须**生成对应的 DDL 语句**（如 CREATE TABLE、CREATE INDEX 等），可直接执行建表；与表结构描述一致；**DDL 须体现上述 `id` 约定及 `create_time`/`update_time` 毫秒精度**。
    - **刷数/数据迁移**：若方案涉及**刷数**（历史数据迁移、初始化数据、枚举数据等），须**生成对应的 DML 语句**（如 INSERT、UPDATE）；注明执行顺序与前置条件。
    - **与领域对应**：标明表与领域聚合/实体的对应关系。
-   - 可选：关键查询场景与索引建议、分表分库策略。详见 [reference.md](reference.md) 中「数据库设计模块」小节。
+   - 可选：关键查询场景与索引建议、分表分库策略。详见 [implementation-layers.md](references/implementation-layers.md) 中「数据库设计模块」小节。
 
 7. **模块变更清单**  
    **核心**：按层列出变更，且每条变更标明对应的**代码编写类** skill，便于实现时直接选用。
@@ -155,6 +155,10 @@ description: Produces technical solution documents from PRD input, structured fo
 
 - **每次使用本技能完成交付后，最后一步须更新知识图谱**。根据本次产出（如新建/修改的技术方案文档），创建或更新 ontology 中的实体与关系（如 Document、Project、Task；`part_of`、`has_task` 等），或调用 **ontology** 技能、或向 `memory/ontology/graph.jsonl` 追加操作记录，使图谱与项目当前状态一致。详见 [ontology/SKILL.md](../ontology/SKILL.md)。
 
+- 完整模板与「变更类型 → skill」映射表见 [implementation-layers.md](references/implementation-layers.md)。
+
 ## Reference
 
-- 完整模板与「变更类型 → skill」映射表见 [reference.md](reference.md)。
+- **Pre-design Questions**: [design-questions.md](references/design-questions.md)
+- **Domain Model Design Guide**: [domain-model-design.md](references/domain-model-design.md)
+- **Implementation Layers (Application, Adapter, Database)**: [implementation-layers.md](references/implementation-layers.md)

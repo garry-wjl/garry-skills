@@ -1,12 +1,10 @@
-# Reference: Client 层 Case
+# Client Layer Cases
 
-以下 Case 与 Skill 打包，供实现 client 时参考。将 `BASE_PACKAGE` 替换为项目包名。若项目将 Result/CommonRequest/BusinessException 放在 facade，则 adapter/application 依赖 facade 使用，client 仅保留业务 Param/VO/DTO。
+Client defines data carriers (Param, VO, DTO) and validation; has NO domain/infra dependencies; uses naming *Param/*VO/*DTO per usage.
 
----
+## Case 1: Unified Response Result
 
-## Case 1: 统一响应 Result（若在 client 中定义）
-
-路径：`client/src/main/java/<BASE_PACKAGE_PATH>/client/common/Result.java`
+Path: `client/src/main/java/<BASE_PACKAGE_PATH>/client/common/Result.java`
 
 ```java
 package BASE_PACKAGE.client.common;
@@ -57,14 +55,13 @@ public class Result<T> {
 
 ---
 
-## Case 2: 入参 Param（校验注解）
+## Case 2: Input Param (validation annotations)
 
-路径：`client/src/main/java/<BASE_PACKAGE_PATH>/client/conversation/CreateSessionParam.java`
+Path: `client/src/main/java/<BASE_PACKAGE_PATH>/client/conversation/CreateSessionParam.java`
 
 ```java
 package BASE_PACKAGE.client.conversation;
 
-import BASE_PACKAGE.client.common.CommonRequest;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -77,9 +74,9 @@ public class CreateSessionParam {
 
 ---
 
-## Case 3: 视图 VO（返回结构）
+## Case 3: View VO (return structure)
 
-路径：`client/src/main/java/<BASE_PACKAGE_PATH>/client/conversation/ConversationVo.java`
+Path: `client/src/main/java/<BASE_PACKAGE_PATH>/client/conversation/ConversationVo.java`
 
 ```java
 package BASE_PACKAGE.client.conversation;
@@ -95,4 +92,4 @@ public class ConversationVo {
 }
 ```
 
-要点：client 仅做数据承载与校验注解；不依赖 domain/infra；命名 *Param / *VO / *DTO 与用途一致。
+Key: Client only carries data & validation annotations; no domain/infra dependencies; naming *Param/*VO/*DTO matches purpose.

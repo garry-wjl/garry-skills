@@ -29,7 +29,7 @@ Guides implementing the **facade** module: mainly **business-agnostic, portable 
 | **DomainEventDTO** | 领域事件传输对象（id, type, data, time, sender） | 在 `facade/domain` 下新建 |
 | **DomainEventPublisher** | 领域事件发布接口（`void send(DomainEventDTO eventDTO)`） | 在 `facade/domain` 下新建 |
 
-**流程：** 检查 `facade/domain/` 下是否已有上述三个类；若任一不存在，先按 [reference.md](reference.md) 创建，再继续其他 facade 内容。
+**流程：** 检查 `facade/domain/` 下是否已有上述三个类；若任一不存在，先按 [references/facade-core-classes.md](references/facade-core-classes.md) 创建，再继续其他 facade 内容。
 
 ### Lombok 使用约定（本模块必选）
 
@@ -40,7 +40,7 @@ Guides implementing the **facade** module: mainly **business-agnostic, portable 
 | **DomainEventDTO** | `@AllArgsConstructor`、`@NoArgsConstructor`、`@Builder`、`@Getter`、`@Setter` | 领域事件 DTO，支持构造器与 Builder |
 | **CommonRequest** | `@Data` | 通用请求基类，使用 @Data 生成 getter/setter/equals/hashCode 等 |
 
-创建或修改上述类时须严格按上表使用注解，模板见 [reference.md](reference.md)。
+创建或修改上述类时须严格按上表使用注解，模板见 [references/facade-core-classes.md](references/facade-core-classes.md)。
 
 **兼容性说明**：若项目未启用 Lombok 注解处理器（例如与 Java 21 的兼容性问题导致 `TypeTag::UNKNOWN` 等），可暂时手写 getter/setter、全参/无参构造器及 Builder，保持与上述注解生成的 API 一致，以便 domain/infra 等依赖方正常编译。
 
@@ -60,7 +60,7 @@ Guides implementing the **facade** module: mainly **business-agnostic, portable 
 2. 检查是否存在 `facade/common/Result.java`；不存在则创建 common 包与 Result。
 3. 检查是否存在 `facade/exception/BusinessException.java`；不存在则创建 exception 包与 BusinessException。
 
-创建时使用 [reference.md](reference.md) 中「Request / Result / Exception 模板」节，将 `BASE_PACKAGE` 替换为项目包名。
+创建时使用 [references/facade-common-classes.md](references/facade-common-classes.md) 和 [references/facade-core-classes.md](references/facade-core-classes.md) 中「Request / Result / Exception 模板」节，将 `BASE_PACKAGE` 替换为项目包名。
 
 ## Facade 的职责与依赖
 
@@ -78,5 +78,5 @@ Guides implementing the **facade** module: mainly **business-agnostic, portable 
 
 ## Reference
 
-- 参考内容与本 Skill 打包：领域基础类型与 Request/Result/Exception 的完整代码模板（按 BASE_PACKAGE 替换包名）见 [reference.md](reference.md)。
+- 参考内容与本 Skill 打包：领域基础类型与 Request/Result/Exception 的完整代码模板（按 BASE_PACKAGE 替换包名）见 [references/facade-core-classes.md](references/facade-core-classes.md) 和 [references/facade-common-classes.md](references/facade-common-classes.md)。
 - **本模块可选第三方依赖**（pom 依赖选择）：[module-dependencies.md](../module-dependencies.md) 中「facade」小节。

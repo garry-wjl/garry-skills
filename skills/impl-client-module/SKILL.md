@@ -39,5 +39,5 @@ Guides implementing the **client** module：对外暴露的数据契约与通用
 
 ## Reference
 
-- 与本 Skill 打包的 Case（Result、Param、VO 示例）：[reference.md](reference.md)。
+- 与本 Skill 打包的 Case（Result、Param、VO 示例）：[references/client-cases.md](references/client-cases.md)。
 - **本模块可选第三方依赖**（pom 依赖选择）：[module-dependencies.md](../module-dependencies.md) 中「client」小节。

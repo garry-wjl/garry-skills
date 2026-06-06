@@ -30,7 +30,7 @@ description: Implements code from a technical solution document by orchestrating
 
 1. **解析技术方案**
    - 从文档中提取：目标与范围、涉及层次与领域、**模块变更清单**、**实现顺序**、接口与数据契约、其他（表结构、外部依赖等）。
-   - 若文档中有「对应 Skill」列，直接按该列确定每层使用的 skill；否则按「变更类型 → Skill」映射（见 [reference.md](reference.md)）确定。
+   - 若文档中有「对应 Skill」列，直接按该列确定每层使用的 skill；否则按「变更类型 → Skill」映射（见 [references/implementation-workflow.md](references/implementation-workflow.md)）确定。
 
 2. **按实现顺序逐层实现**
    - 严格按文档中的**实现顺序**执行，不跳过、不逆序。
@@ -63,4 +63,4 @@ description: Implements code from a technical solution document by orchestrating
 
 ## Reference
 
-- 变更类型与 impl-* skill 的映射、示例流程见 [reference.md](reference.md)。
+- 变更类型与 impl-* skill 的映射、示例流程见 [references/implementation-workflow.md](references/implementation-workflow.md)。
