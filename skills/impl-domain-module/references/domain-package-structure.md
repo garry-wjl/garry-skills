@@ -5,7 +5,7 @@
 - **common subdirectory (必须)**: Create **DomainEventConstant** class; all constants `public static final String`, strictly follow business rules; place directly in domain/common without subdirs.
 - **Domain-based subdirectories**: Each business domain one subdirectory; **each domain subdirectory allows ONLY four subdirs**: factory/, gateway/, repository/, valueobject/ (NO query/, dto/, etc.); aggregate root and optional event payload .java in **domain subdirectory root**.
   - **repository/** — Repository interfaces (ONLY: save, findByNum, deleteByNum)
-  - **factory/** — Factory interfaces (at least: create(required fields), createByNum(num))
+  - **factory/** — Factory interfaces (generally two core methods: create(required fields), createByNum(num))
   - **gateway/** — Gateway interfaces: generate business ID; third-party, permission, non-repository queries (e.g., by email, by ID, list)
   - **valueobject/** — Value objects (anemic or enum/constant)
 

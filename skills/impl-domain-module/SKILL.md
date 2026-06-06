@@ -61,7 +61,7 @@ Guides implementing the **domain** module：领域层，承载领域模型与领
 - 每个领域子包下**逻辑职责**划分如下：
   - **根实体**：聚合根（如 `Conversation`、`Message`），放在领域包根下；使用 **@Getter / @Setter**；继承 facade 的 `DomainEntity` 后，**必须完整实现其全部抽象方法**（`domainValidate()`、`save(operatorId)`、`delete(operatorId)`），不得只实现部分或留空；**每次完成领域操作后都必须发送领域事件**（save、delete 及任何会改变状态或持久化的领域方法，在六步最后一步发送对应类型事件）；事件通过注入的 `DomainEventPublisher` 发送，事件类型使用 common 中的 **DomainEventConstant**。**每个领域对象**须将**仓储、网关**定义为该对象的**属性**，并**提供传入必填字段的构造方法**：构造方法传入构建该领域对象所必须的数据字段（含仓储、网关），**不包含由状态机控制的状态字段**——状态字段应通过**领域方法**进行初始化与流转。
   - **repository/**：仓储**接口**为**固定三方法契约**，**仅允许**以下签名（领域根类型 `R` 随聚合替换）：`void save(R aggregate)`、`R findByNum(String num)`、`void deleteByNum(String num)`。**禁止**在此接口上声明任何其他方法（包括但不限于 `build*By`、`findById`、`findByEmail`、列表查询、`new*ForCreate`、统计等）；**不得**扩张 Repository 接口。参数与返回值为 domain 实体，**不**出现 infra 类型。
-  - **factory/**：工厂**接口**，至少包含：**create(必填字段…)**、**createByNum(String num)**；`createByNum` **必须**等价于委托 `repository.findByNum(num)`；其余方法结合技术方案按需；返回 domain 实体；实现类在 infra。
+  - **factory/**：工厂**接口**，一般情况下包含两个核心方法：**create(必填字段…)**、**createByNum(String num)**；`create(...)` 根据属性构建新的领域对象，`createByNum` **必须**等价于委托 `repository.findByNum(num)` 按业务编码加载并构建既有领域对象；其余方法仅在技术方案明确需要时按需补充；返回 domain 实体；实现类在 infra。
   - **gateway/**：网关**接口**，至少包含**生成业务编码**的方法。**范围**：除上述三方法仓储外的**所有出站/读模型协作**均放在 **gateway/**（由 infra 实现），例如：第三方 HTTP、编号规则、`FamilyRoleGateway` 式权限、以及**按主键/邮箱/列表/分页等持久化读接口**（命名可为 `XxxReadGateway` / `XxxReadPort` 等，但**源文件必须位于 `gateway/` 包内**）。**禁止**为读能力单建 `query/` 等目录。
   - **valueobject/**：值对象分为两类——（1）**贫血模型值对象**（如 FamilyMember、BookMember、BookTransaction）：仅含业务属性，不继承 DomainEntity，**必须**使用 `@Getter`、`@Setter`、`@Builder`、`@AllArgsConstructor`、`@NoArgsConstructor`；（2）**枚举或常量**（如 ClassifyStatus、FamilyMemberRole）：按业务所需确定。供实体与 repository 使用，无业务逻辑，仅表达领域概念。
   - **事件载荷（原 dto）**：若需**仅含属性的**事件载荷类，放在**领域包根**下（如 `ConversationEventDTO.java` 与 `Conversation.java` 同级），**不得**使用 `dto` 子目录；或使用 `DomainEventDTO.data(this)`。
@@ -100,7 +100,7 @@ Guides implementing the **domain** module：领域层，承载领域模型与领
 |------|------|
 | **根实体** | 聚合根，放在领域包根下；继承 DomainEntity 并**完整实现其全部抽象方法**（domainValidate、save、delete）；每次领域操作完成后发送领域事件；将仓储、网关定义为实体属性；提供传入必填字段（含仓储、网关，不含状态）的构造方法；状态通过领域方法初始化与流转；封装领域行为。 |
 | **repository/** | **仅**三方法：`save(R)`、`R findByNum(String)`、`void deleteByNum(String)`；**禁止**第四方法及任意其他查询/写入签名。 |
-| **factory/** | 工厂**接口**；至少：`create(必填字段…)`、`createByNum(String num)`；其余按技术方案按需；实现类在 infra。 |
+| **factory/** | 工厂**接口**；一般情况下两个核心方法：`create(必填字段…)`、`createByNum(String num)`；`createByNum` 按业务编码委托 `repository.findByNum(num)`；其余仅在技术方案明确需要时补充；实现类在 infra。 |
 | **gateway/** | 生成业务编码；第三方/权限/**非仓储三方法的读能力**（按 id、邮箱、列表等）均在此定义接口；实现类在 infra。 |
 | **valueobject/** | 贫血模型值对象须用 **@Getter / @Setter / @Builder / @AllArgsConstructor / @NoArgsConstructor**；枚举或常量按业务确定；供实体与 repository 使用，不依赖基础设施。 |
 | **（包根）** | 聚合根 Java 文件；可选事件载荷 POJO（与根实体同级，**无子目录**）。 |
@@ -108,7 +108,7 @@ Guides implementing the **domain** module：领域层，承载领域模型与领
 ## 规则
 
 1. **common 子包必须存在**，且包含 **DomainEventConstant** 类；常量均为 `public static final String`，命名严格遵循业务规则；不在 common 中放领域专属实体或接口。
-2. **领域工厂接口**至少包含：**create**、**createByNum**；**createByNum(String num)** 的实现**只能**转调对应仓储的 **`findByNum(num)`**，不得在工厂内绕过仓储做持久化；其余方法结合技术方案按需创建。
+2. **领域工厂接口**一般情况下包含两个核心方法：**create**、**createByNum**；`create(...)` 根据属性构建新的领域对象；**createByNum(String num)** 的实现**只能**转调对应仓储的 **`findByNum(num)`**，根据业务编码加载并构建既有领域对象，不得在工厂内绕过仓储做持久化；其余方法仅在技术方案明确需要时按需创建。
 3. **领域网关接口**至少包含：生成业务编码方法；凡领域操作中依赖**第三方接口、工具方法**等实现的能力，均通过网关定义，由 infra 实现。
 4. **领域仓储接口（硬约束）**：**只能**包含且必须包含 **`void save(R)`、`R findByNum(String num)`、`void deleteByNum(String num)`** 三个方法，方法名、数量与语义须一致；**不得**增加别名（如 `buildBookBy`/`findById`/`delete`）或任何额外方法。存量接口若不一致，新代码以本 skill 为准并逐步收敛。
 5. **值对象**：贫血模型值对象（仅含属性、不继承 DomainEntity）**必须**使用 `@Getter`、`@Setter`、`@Builder`、`@AllArgsConstructor`、`@NoArgsConstructor`；枚举或常量根据业务所需确定。

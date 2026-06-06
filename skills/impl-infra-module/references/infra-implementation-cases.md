@@ -51,7 +51,7 @@ public class ConversationEntity {
 
 - Inject **only** ConversationRepository (aggregate's own Mapper).
 - **Never** inject DomainEventPublisher; **never** inject any **Gateway**.
-- `createByNum` delegate to `conversationRepository.findByNum(num)`.
+- Generally implement two core methods: `create(...)` builds a new domain object from attributes; `createByNum` delegates only to `conversationRepository.findByNum(num)` to load/build the existing domain object by business code.
 - If domain needs Gateway/Publisher still: **application layer after factory/repository returns, set it**, or adjust domain construction; **RepositoryImpl never injects or references these two bean types** (see SKILL rule 8).
 
 Path: `infra/conversation/factory/ConversationFactoryImpl.java`

@@ -24,7 +24,7 @@ public interface ConversationRepository {
 
 Path: `domain/conversation/factory/ConversationFactory.java`
 
-**At least** two methods: **create**, **createByNum**. **createByNum(String num)** in infra implementation **MUST only delegate** to repository's **findByNum(num)**, no other repository calls allowed. Other methods per technical plan.
+Generally two core methods: **create**, **createByNum**. `create(...)` builds a new domain object from attributes. **createByNum(String num)** in infra implementation **MUST only delegate** to repository's **findByNum(num)** to load/build the existing domain object by business code; no other repository calls allowed. Other methods only when explicitly required by the technical plan.
 
 ```java
 package BASE_PACKAGE.domain.conversation.factory;
@@ -32,9 +32,9 @@ package BASE_PACKAGE.domain.conversation.factory;
 import BASE_PACKAGE.domain.conversation.Conversation;
 
 public interface ConversationFactory {
-    /** Build domain object from required fields (e.g., conversation title) */
+    /** Build a new domain object from required attributes (e.g., conversation title) */
     Conversation create(String title);
-    /** Build domain object from business ID */
+    /** Load/build an existing domain object by business code num */
     Conversation createByNum(String num);
 }
 ```
