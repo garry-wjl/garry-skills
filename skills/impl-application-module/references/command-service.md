@@ -107,7 +107,7 @@ public class ConversationDeleteParamDTO {
 
 ## 关键点
 
-1. **仅依赖 domain 的 Factory**：不直接创建实体，而是通过 Factory 创建或加载
+1. **仅依赖 domain 的 Factory**：不直接创建实体，而是通过 Factory 创建或加载；新建使用 `create(...)`，按业务编码加载使用 `createByNum(...)`；禁止直接 `new` 领域对象或直接调用领域对象静态 `create` 方法
 2. **调用实体行为**：通过 `conversation.save()`、`conversation.updateTitle()` 等方法执行业务逻辑
 3. **事务边界**：在 application 方法上使用 `@Transactional(rollbackFor = Exception.class)`
 4. **不含领域规则**：领域规则应在 domain 层实现，application 仅做编排

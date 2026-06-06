@@ -22,8 +22,15 @@
 
 ## Domain Class Diagram (Mermaid Example)
 
+领域类图必须包含聚合根、实体、值对象，以及对应的领域工厂（Factory）。领域对象的创建、加载统一通过 Factory 完成，application 层不得直接 `new` 领域对象，也不得直接调用领域对象静态 `create` 方法构建对象。
+
 ```mermaid
 classDiagram
+    class ConversationFactory {
+        <<factory interface>>
+        +create(title, creatorId) Conversation
+        +createByNum(conversationNum) Conversation
+    }
     class Conversation {
         <<aggregate root>>
         +String id
@@ -31,7 +38,6 @@ classDiagram
         +String create_no
         +String update_no
         +String status
-        +create(title, creatorId)
         +save(operatorId)
         +delete(operatorId)
         +close(operatorId)
@@ -51,6 +57,7 @@ classDiagram
         +BigDecimal amount
         +String currency
     }
+    ConversationFactory ..> Conversation : creates/loads
     Conversation "1" --> "*" Message : contains
     Message --> Money : amount
 ```
@@ -64,6 +71,36 @@ classDiagram
 | **Aggregate Root** | Aggregate entry, unique ID, maintains invariants | Independent lifecycle, referenced by ID externally | id, num, create_no, update_no | save(operatorId), delete(operatorId) | User, Order, Conversation |
 | **Entity** | Has unique ID, belongs to aggregate, may have lifecycle | Distinguishable by ID within aggregate | id, num, create_no, update_no | save(operatorId), delete(operatorId) | OrderItem, FamilyMember, Message |
 | **Value Object** | No standalone ID, defined by property values; **immutable** | Replaceable, equality comparable, no independent lifecycle | None (business properties only) | None | Money, DateRange, Address, CategoryId |
+
+---
+
+## Domain Factory Design
+
+### Factory Requirements
+
+- **Every aggregate root MUST have a corresponding `*Factory` interface** in the domain layer.
+- Domain object creation and loading **MUST go through Factory**.
+- Application layer **MUST NOT** directly `new` domain objects.
+- Application layer **MUST NOT** directly call domain object static `create` methods to construct objects.
+- Infra layer implements the Factory interface and may depend on Entity/Mapper/Repository implementation details.
+
+### Factory Method Checklist
+
+For each Factory, specify:
+
+1. **Factory name**: e.g., `ConversationFactory`, `OrderFactory`
+2. **Method signature**: generally two default methods: `create(...)` and `createByNum(...)`
+3. **Input parameters**: business attributes for `create(...)`; business code `num` for `createByNum(...)`
+4. **Return type**: aggregate root or entity
+5. **Responsibility**: `create(...)` builds a new domain object from attributes; `createByNum(...)` loads data through Repository by business code and builds the existing domain object
+6. **Dependencies**: Repository/Gateway/Mapper/Entity converters used by infra implementation
+
+**Example (Factory Method Table)**:
+
+| Factory | Method | Params | Return | Responsibility | Dependencies |
+|---------|--------|--------|--------|----------------|--------------|
+| ConversationFactory | create | title, creatorId | Conversation | Create a new Conversation aggregate from attributes with initial state | NumGenerator |
+| ConversationFactory | createByNum | conversationNum | Conversation | Load data through Repository by business code and build existing domain object | ConversationRepository |
 
 ---
 
@@ -130,6 +167,8 @@ Value objects **reduce entity attribute bloat** and **centralize validation logi
 ## Domain Model Professional Checklist
 
 - [ ] Each **aggregate root** and **entity** has basic attributes: id, num, create_no, update_no (value objects excluded)
+- [ ] Each aggregate root has a corresponding **Factory interface** in the domain layer
+- [ ] Domain object creation/loading goes through Factory; application does not directly `new` domain objects or call static `create` construction methods
 - [ ] Each aggregate root and persistent entity has **save(…, operatorId)** and **delete(…, operatorId)**
 - [ ] **ALL** domain actions include **operatorId parameter**
 - [ ] Each aggregate has clear **aggregate root**; boundary has only one root per aggregate

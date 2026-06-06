@@ -14,8 +14,8 @@ For each service (CommandService, QueryService, StreamService), specify:
 For each method, write execution steps (Mermaid sequenceDiagram or ordered list):
 1. **Parameter validation**: Non-null, format, business rules
 2. **Operation context**: Extract operatorId from context; permission check
-3. **Load aggregate/Query**: Repository.findById, Repository.list, or Gateway
-4. **Invoke domain action or Gateway**: E.g., aggregate.create(...), aggregate.record(...), CategorySuggestGateway.suggest(...)
+3. **Create/Load aggregate through Factory**: use `Factory.create(...)` to create a new domain object from attributes, and `Factory.createByNum(...)` to load/build an existing domain object by business code; application must not directly `new` domain objects or call static `create` construction methods
+4. **Invoke domain action or Gateway**: E.g., aggregate.record(...), aggregate.close(...), CategorySuggestGateway.suggest(...)
 5. **Persist/Publish event**: Repository.save, DomainEventPublisher.publish; mark @Transactional if needed
 6. **Assemble return**: Construct VO, Result return
 
@@ -26,7 +26,7 @@ For each method, write execution steps (Mermaid sequenceDiagram or ordered list)
 | 1 | Validate: name, ownerId non-null | — |
 | 2 | Operator: operatorId from context; verify consistency with ownerId or admin role | — |
 | 3 | Verify: ownerId user exists | UserRepository.findById(ownerId) |
-| 4 | Create family aggregate: Family.create(name, ownerId) | FamilyFactory or direct construction |
+| 4 | Create family aggregate through Factory: familyFactory.create(name, ownerId) | FamilyFactory |
 | 5 | Persist & publish event | FamilyRepository.save; DomainEventPublisher.publish(FAMILY_CREATED) |
 | 6 | Return: family id or FamilyVO | Result<String> or Result<FamilyVO> |
 
