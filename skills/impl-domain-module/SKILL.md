@@ -133,5 +133,5 @@ Guides implementing the **domain** module：领域层，承载领域模型与领
 
 ## Reference
 
-- 与本 Skill 打包的 Case（包结构、common 常量、Repository/Factory/Gateway 接口、值对象、领域实体写法）：[reference.md](reference.md)。
+- 与本 Skill 打包的 Case（包结构、common 常量、Repository/Factory/Gateway 接口、值对象、领域实体写法）：[references/domain-interfaces.md](references/domain-interfaces.md) 和 [references/domain-package-structure.md](references/domain-package-structure.md)。
 - **本模块可选第三方依赖**（pom 依赖选择）：[module-dependencies.md](../module-dependencies.md) 中「domain」小节。

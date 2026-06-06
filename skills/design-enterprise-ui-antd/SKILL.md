@@ -16,10 +16,10 @@ description: Designs enterprise-level application UI with Ant Design Pro for PC 
 
 ## 设计框架约定
 
-- **PC 端框架**：**Ant Design Pro**（[pro.ant.design](https://pro.ant.design)），**必选**。实现方式二选一（详见 [reference.md](reference.md)「Ant Design Pro（PC 端）」）：(1) **Umi + Ant Design Pro 官方脚手架**生成工程；(2) **Vite + React + TypeScript** 并安装 `antd` 与 `@ant-design/pro-components`，以 **ProLayout** 作为应用主壳，页面级用 **PageContainer**，列表/表单以 **ProTable / ProForm** 等与 Pro 规范一致。**禁止**仅用裸 `antd` Layout 拼凑后台壳子而不引入 Pro 布局与 Pro 组件体系（特例：纯营销落地页等非后台形态可与用户确认后例外）。
-- **移动端框架**：**Ant Design Mobile**（[ant-design-mobile.com](https://ant-design-mobile.com)）。设计移动端界面（H5、公众号内页等）时，必须使用 Ant Design Mobile 的组件与规范（如 TabBar、NavBar、Capsule、List、Form、Dialog 等）。**移动端与 PC 端必须分为两个独立工程**（即 `web/` 与 `mobile/` 两个子工程），不得在同一工程内用路由混合，见 [reference.md](reference.md)。
-- **UI 工程位置与命名**：设计出的 UI 工程必须放在**项目根目录下的 `doc/ui` 文件夹**中；**按日期命名，且与 PRD 文档一一对应**。对应规则：若 PRD 文档为 `doc/产品方案/YYYY-MM-DD_<产品或需求名称>-PRD.md`，则对应 UI 工程目录为 `doc/ui/YYYY-MM-DD_<产品或需求名称>/`（与 PRD 文件名去掉 `-PRD.md` 后的部分一致）。若该日期下有多份 PRD，则每个产品/需求单独一个子目录。详见 [reference.md](reference.md) 中「UI 工程存放与 PRD 对应」。
-- **Agent 会话场景**：若需求涉及 **Agent 对话、AI 聊天、多轮会话**，则在该工程内使用 **Ant Design X**（[x.ant.design](https://x.ant.design)）：`@ant-design/x-sdk` 提供 useXChat、useXConversations、Chat Provider 等；界面组件可使用 Bubble、Sender、Welcome、Conversations 等。详见 [reference.md](reference.md) 中「Ant Design X」小节。
+- **PC 端框架**：**Ant Design Pro**（[pro.ant.design](https://pro.ant.design)），**必选**。实现方式二选一（详见 [references/ui-project-structure.md](references/ui-project-structure.md)「Ant Design Pro（PC 端）」）：(1) **Umi + Ant Design Pro 官方脚手架**生成工程；(2) **Vite + React + TypeScript** 并安装 `antd` 与 `@ant-design/pro-components`，以 **ProLayout** 作为应用主壳，页面级用 **PageContainer**，列表/表单以 **ProTable / ProForm** 等与 Pro 规范一致。**禁止**仅用裸 `antd` Layout 拼凑后台壳子而不引入 Pro 布局与 Pro 组件体系（特例：纯营销落地页等非后台形态可与用户确认后例外）。
+- **移动端框架**：**Ant Design Mobile**（[ant-design-mobile.com](https://ant-design-mobile.com)）。设计移动端界面（H5、公众号内页等）时，必须使用 Ant Design Mobile 的组件与规范（如 TabBar、NavBar、Capsule、List、Form、Dialog 等）。**移动端与 PC 端必须分为两个独立工程**（即 `web/` 与 `mobile/` 两个子工程），不得在同一工程内用路由混合，见 [references/ui-project-structure.md](references/ui-project-structure.md)。
+- **UI 工程位置与命名**：设计出的 UI 工程必须放在**项目根目录下的 `doc/ui` 文件夹**中；**按日期命名，且与 PRD 文档一一对应**。对应规则：若 PRD 文档为 `doc/产品方案/YYYY-MM-DD_<产品或需求名称>-PRD.md`，则对应 UI 工程目录为 `doc/ui/YYYY-MM-DD_<产品或需求名称>/`（与 PRD 文件名去掉 `-PRD.md` 后的部分一致）。若该日期下有多份 PRD，则每个产品/需求单独一个子目录。详见 [references/ui-project-structure.md](references/ui-project-structure.md) 中「UI 工程存放与 PRD 对应」。
+- **Agent 会话场景**：若需求涉及 **Agent 对话、AI 聊天、多轮会话**，则在该工程内使用 **Ant Design X**（[x.ant.design](https://x.ant.design)）：`@ant-design/x-sdk` 提供 useXChat、useXConversations、Chat Provider 等；界面组件可使用 Bubble、Sender、Welcome、Conversations 等。详见 [references/antd-colors-and-components.md](references/antd-colors-and-components.md) 中「Ant Design X」小节。
 - **色调与风格**：基于 **Ant Design 配色方案**供用户选择，不自行发明色值。可选方向包括：
   - **品牌主色**：Ant Design 默认品牌蓝（#1677FF），或从 Ant Design 12 色板中选一作为主色（薄暮、火山、日暮、金盏花、日出、青柠、极光绿、明青、拂晓蓝、极客蓝、酱紫、法式洋红）。
   - **主题变体**：默认（default）、紧凑（compact）、暗色（dark），通过 ConfigProvider 配置。
@@ -38,4 +38,4 @@ description: Designs enterprise-level application UI with Ant Design Pro for PC 
 
 ## Reference
 
-- UI 工程存放与 PRD 对应、UI 工程结构、**Ant Design Pro（PC）**、Ant Design Mobile、配色选项、Ant Design X 集成方式见 [reference.md](reference.md)。
+- UI 工程存放与 PRD 对应、UI 工程结构、**Ant Design Pro（PC）**、Ant Design Mobile、配色选项、Ant Design X 集成方式见 [references/ui-project-structure.md](references/ui-project-structure.md) 与 [references/antd-colors-and-components.md](references/antd-colors-and-components.md)。

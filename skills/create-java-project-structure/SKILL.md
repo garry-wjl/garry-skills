@@ -17,7 +17,7 @@ Scaffolds a **structure-only** Java multi-module project: six modules, directory
    - **未收集齐三项前，禁止执行 Step 2，禁止创建或写入任何文件。**
 
 2. **Step 2：生成项目结构（后执行）**
-   - 仅在获得并确认 groupId、artifactId、rootDir 之后，再根据 [reference.md](reference.md) 创建根 POM、六模块 POM 及目录树。
+   - 仅在获得并确认 groupId、artifactId、rootDir 之后，再根据 [references/](references/) 创建根 POM、六模块 POM 及目录树。
 
 **向用户索要信息时**，可这样表述（中英文皆可）：
 
@@ -66,7 +66,7 @@ Dependency rules (no reverse or cross-layer):
    - `modules`: facade, domain, infra, client, application, adapter (order above)
    - **通用三方包**：在根 pom 的 `dependencyManagement` 中声明版本，并在根 pom 的 `dependencies` 中**直接引入** **lombok**、**fastjson2**、**hutool-all**，子模块通过继承获得，**不在各模块中重复声明**。
    - 存储/缓存的版本在 `dependencyManagement` 中声明（mybatis-plus、redisson），供 infra 引用。
-   - 具体片段见 [reference.md](reference.md) 第 1 节。
+   - 具体片段见 [pom-templates.md](references/pom-templates.md)。
 
 2. **Six module POMs**
    - Each: `parent` = root project, `artifactId` = module name, `packaging` = jar.
@@ -137,4 +137,5 @@ After generation:
 
 ## Reference
 
-- Exact POM templates and optional package-info content: [reference.md](reference.md).
+- **POM templates** (Root + 6 modules): [pom-templates.md](references/pom-templates.md)
+- **Module setup** (dependencies, directory layout, package-info): [module-setup.md](references/module-setup.md)

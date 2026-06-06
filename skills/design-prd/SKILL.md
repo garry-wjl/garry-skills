@@ -36,13 +36,13 @@ description: Produces Product Requirements Documents (PRD) that serve as input t
    - **范围**：本次包含的功能/模块；**不做什么**（明确排除项）。
 
 3. **系统线框图（必选，优先产出）**  
-   在展开功能细节前，须先给出**系统级线框图**，表达：系统包含哪些主要模块/页面、模块间关系、主导航与信息架构。涵盖主要页面骨架（如首页、列表、详情、创建/编辑等）及关键元素位置，可区分 Web/移动端。形式：线框图、页面结构草图或 Mermaid/ASCII 结构图；嵌入文档并辅以简要说明。详见 [reference.md](reference.md) 中「线框图」小节。
+   在展开功能细节前，须先给出**系统级线框图**，表达：系统包含哪些主要模块/页面、模块间关系、主导航与信息架构。涵盖主要页面骨架（如首页、列表、详情、创建/编辑等）及关键元素位置，可区分 Web/移动端。形式：线框图、页面结构草图或 Mermaid/ASCII 结构图；嵌入文档并辅以简要说明。详见 [diagrams-and-mockups.md](references/diagrams-and-mockups.md) and [prd-template-and-example.md](references/prd-template-and-example.md) 中「线框图」小节。
 
 4. **业务流程图（必选）**  
-   须包含**业务流程图**，描述核心业务从触发到结束的步骤、分支与角色。例如：录入流水 → 分类/审核 → 入账；或注册 → 登录 → 创建账本 → 记账。可选用 Mermaid flowchart/sequence、BPMN 风格图或流程图截图；图中须体现主流程、异常/分支与涉及角色。详见 [reference.md](reference.md) 中「业务流程图」小节。
+   须包含**业务流程图**，描述核心业务从触发到结束的步骤、分支与角色。例如：录入流水 → 分类/审核 → 入账；或注册 → 登录 → 创建账本 → 记账。可选用 Mermaid flowchart/sequence、BPMN 风格图或流程图截图；图中须体现主流程、异常/分支与涉及角色。详见 [diagrams-and-mockups.md](references/diagrams-and-mockups.md) and [prd-template-and-example.md](references/prd-template-and-example.md) 中「业务流程图」小节。
 
 5. **用例图（必选）**  
-   须包含**用例图**，表达参与者（角色）与用例（功能）的关系，以及用例之间的包含/扩展关系。明确「谁能用哪些功能」，便于技术方案设计时做权限与模块边界划分。可选用 Mermaid、PlantUML 或图示工具产出，嵌入 PRD 并说明图例。详见 [reference.md](reference.md) 中「用例图」小节。
+   须包含**用例图**，表达参与者（角色）与用例（功能）的关系，以及用例之间的包含/扩展关系。明确「谁能用哪些功能」，便于技术方案设计时做权限与模块边界划分。可选用 Mermaid、PlantUML 或图示工具产出，嵌入 PRD 并说明图例。详见 [diagrams-and-mockups.md](references/diagrams-and-mockups.md) and [prd-template-and-example.md](references/prd-template-and-example.md) 中「用例图」小节。
 
 6. **用户与场景**  
    主要用户角色、典型使用场景或用户故事（谁在什么情况下要完成什么），可与用例图对应。
@@ -51,7 +51,7 @@ description: Produces Product Requirements Documents (PRD) that serve as input t
    按模块或功能点列出，建议标注**优先级**（P0/P1/P2 或 MVP/后续迭代），便于技术方案设计时拆解子需求与实现顺序；功能点应与线框图、业务流程图、用例图一致。
 
 8. **原型图/界面说明（必选）**  
-   在已有线框图与流程图的基础上，补充**关键页面的详细原型图**：主要页面布局、核心操作流程（如创建/编辑/列表）、关键状态与异常态（如空态、错误提示）。可与线框图复用或细化；若为多端需求，需区分 Web/移动端。原型图可嵌入文档（图片）或附链接，并在正文中引用说明。详见 [reference.md](reference.md) 中「原型图」小节。
+   在已有线框图与流程图的基础上，补充**关键页面的详细原型图**：主要页面布局、核心操作流程（如创建/编辑/列表）、关键状态与异常态（如空态、错误提示）。可与线框图复用或细化；若为多端需求，需区分 Web/移动端。原型图可嵌入文档（图片）或附链接，并在正文中引用说明。详见 [diagrams-and-mockups.md](references/diagrams-and-mockups.md) and [prd-template-and-example.md](references/prd-template-and-example.md) 中「原型图」小节。
 
 9. **非功能需求（可选但建议有）**  
    性能、安全、兼容、审计、多端、错误提示等与「怎么做」相关的约束或期望。
@@ -80,4 +80,4 @@ description: Produces Product Requirements Documents (PRD) that serve as input t
 
 ## Reference
 
-- PRD 模板与示例见 [reference.md](reference.md)。
+- PRD 模板与示例见 [diagrams-and-mockups.md](references/diagrams-and-mockups.md) and [prd-template-and-example.md](references/prd-template-and-example.md)。
