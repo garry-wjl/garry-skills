@@ -126,7 +126,7 @@ description: Produces technical solution documents from PRD input, structured fo
    - **二级目录**：先 **6.1 业务模块划分**（表格列出本方案涉及的 application 模块，与 4.1 业务层级/领域对应），再按**业务模块**分节（如 6.2 用户（user）、6.3 家庭（family）、6.4 账本（book）、6.5 账户（account）；若认证单独成模块可为 6.2 认证（auth）等）。  
    - **三级目录**：每个业务模块下包含——**Service 方法清单**（本模块的 Service、方法签名、职责、入参/出参）、**方法时序逻辑**（本模块关键方法的执行步骤或时序图）。  
    - 示例：`6.2 用户（user）` → `6.2.1 Service 方法清单`、`6.2.2 方法时序逻辑`；`6.3 家庭（family）` → `6.3.1 Service 方法清单`、`6.3.2 方法时序逻辑`；跨模块或公共的 Service（如导入、统计、公众号绑定）可单独成节（如 6.x 导入（import）、6.x 统计（stats））。  
-   - **方法时序逻辑**内容要求：**设计出的所有 Service 方法都须有时序图**描述实现逻辑；每个方法配一张 Mermaid sequenceDiagram（或等价图），表达步骤顺序。CommandService 步骤通常为：1. 参数校验 2. 解析操作人/鉴权 3. 如需查询则调用对应领域 QueryService 4. 通过 Factory 创建/加载领域对象 5. 调用领域动作或 Gateway 6. 持久化/发布事件 7. 组装返回。禁止出现 application 直接调用 Repository 的步骤。跨 Service 调用、事务边界须标明。  
+   - **方法时序逻辑**内容要求：**设计出的所有 Service 方法都须有时序图**描述实现逻辑；每个方法配一张 Mermaid sequenceDiagram（或等价图），表达步骤顺序。CommandService 步骤通常为：1. 参数校验 2. 解析操作人/鉴权 3. 如需查询则调用对应领域 QueryService 4. 通过 Factory 创建/加载领域对象 5. 调用领域动作（领域对象内部通过其持有的 Gateway/Repository/DomainEventPublisher 完成外部协作与事件发布）6. 返回。禁止出现 application 直接调用 Repository 或 Gateway 的步骤。跨 Service 调用、事务边界须标明。  
    详见 [implementation-layers.md](references/implementation-layers.md) 中「**应用层设计：Service 方法与时序逻辑**」小节。
 
 7. **Adapter 层设计（必选，当方案涉及 adapter 层时）**  

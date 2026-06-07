@@ -8,6 +8,7 @@ Per strong constraints: Entity uses **@Data** + field comments; **FactoryImpl in
 
 - Use **@Data**, do NOT hand-write getter/setter.
 - **Each field**: comment above or end-of-line with meaning, unit, enum or constraint.
+- **DB operations**: query MUST use `LambdaQueryWrapper<Entity>` with field lambda references (e.g., `.eq(Entity::getField, value)`); update MUST use `LambdaUpdateWrapper<Entity>` with field lambda references. Avoid raw `QueryWrapper` with string column names.
 
 Path: `infra/conversation/entity/ConversationEntity.java`
 
@@ -91,7 +92,7 @@ public class ConversationFactoryImpl implements ConversationFactory {
 - `findByNum(num)`: Query Entity by `num`, convert to domain; not found → return `null`. This method is for domain object / Factory collaboration only, not an application-layer query API.
 - `save/delete`: Entity ↔ domain conversion only in repository.
 
-Skeleton (only ConversationMapper injected; Lambda query needs `import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper`):
+Skeleton (only ConversationMapper injected; query/update MUST use LambdaQueryWrapper / LambdaUpdateWrapper with Entity field references for type safety; import `com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper` and `com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper`):
 
 ```java
 @Component

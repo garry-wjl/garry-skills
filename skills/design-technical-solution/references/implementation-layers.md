@@ -17,7 +17,7 @@ For each method, write execution steps (Mermaid sequenceDiagram or ordered list)
 2. **Operation context**: Extract operatorId from context; permission check
 3. **Query through QueryService when needed**: If the use case needs reads or validation data, call the corresponding domain's QueryService; do NOT inject/call Repository from application
 4. **Build aggregate through Factory**: use only `Factory.create(...)` to build a new domain object from attributes, and `Factory.createByNum(...)` to build an existing domain object by business code; Factory must not contain `createById(...)`, `rebuild(...)`, or other methods; application must not directly `new` domain objects or call static `create` construction methods
-5. **Invoke domain action or Gateway**: E.g., aggregate.record(...), aggregate.close(...), CategorySuggestGateway.suggest(...)
+5. **Invoke domain action**: E.g., aggregate.record(...), aggregate.close(...). Gateway is called internally by the domain object through its own dependencies, not directly from the application layer.
 6. **Persist/Publish event**: performed inside domain actions through domain object dependencies; mark @Transactional on application method if needed
 7. **Assemble return**: Construct client DTO or business identifier return
 

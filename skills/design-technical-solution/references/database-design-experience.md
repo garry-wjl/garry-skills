@@ -64,6 +64,12 @@ INSERT INTO xxx_enum (...) VALUES (...);
 - 组合索引
 - 是否支持分页/排序
 
+### 6. Mapper 操作规约
+
+- **查询必须使用 `LambdaQueryWrapper<Entity>`**：通过实体字段的 lambda 引用构造条件（如 `.eq(Entity::getNum, num)`），避免使用字符串列名的 `QueryWrapper`。
+- **更新必须使用 `LambdaUpdateWrapper<Entity>`**：通过实体字段的 lambda 引用构造更新条件和赋值（如 `.eq(Entity::getNum, num).set(Entity::getStatus, status)`）。
+- **禁止**在 Mapper/RepositoryImpl/QueryService 中使用字符串拼接 SQL 条件、`Map` 参数或 `UpdateWrapper`/`QueryWrapper` 的字符串列名重载。
+
 ## 常见设计经验
 
 ### 经验 1：先有领域模型，再有表
@@ -94,3 +100,4 @@ INSERT INTO xxx_enum (...) VALUES (...);
 - [ ] 是否包含 create_no / update_no？
 - [ ] 如有软删除字段，是否确认其只存在于数据库表和 infra Entity 中，而不进入聚合根或领域实体？
 - [ ] 索引是否对应查询场景？
+- [ ] 查询/更新是否统一使用 `LambdaQueryWrapper<Entity>` 和 `LambdaUpdateWrapper<Entity>`？

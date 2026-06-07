@@ -79,4 +79,5 @@ Entity ↔ 领域对象转换应是字段映射和简单常量转换，不应引
 - [ ] Gateway 接口是否定义在领域层，GatewayImpl 是否实现在基础设施层并承接外部能力？
 - [ ] 是否没有把Entity 暴露给应用层、领域层、适配层？
 - [ ] 是否没有把 RepositoryImpl 设计为应用层查询入口？
+- [ ] Mapper 操作是否统一使用 `LambdaQueryWrapper<Entity>`（查询）和 `LambdaUpdateWrapper<Entity>`（更新），且未使用字符串列名的 `QueryWrapper`/`UpdateWrapper`？
 - [ ] Spring Bean 注入是否统一使用 `@Resource`，且未使用 `@Autowired`、构造器注入、Setter 注入或 `ApplicationContext` 手动获取？
