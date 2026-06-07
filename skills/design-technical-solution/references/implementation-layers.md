@@ -8,18 +8,20 @@ For each service (CommandService, QueryService, StreamService), specify:
 - **Method signature**: Name, input type (ParamDTO class), return type (client DTO, void, String/Long business identifier)
 - **Responsibility**: One-line business use case description
 - **Input/Output**: Key fields or reference ParamDTO/DTO names
-- **Repository constraint**: Application services MUST NOT inject or call domain Repository interfaces. Query requirements are provided by the corresponding domain QueryService.
+- **Repository/Gateway constraint**: Application services MUST NOT inject or call domain Repository or Gateway interfaces. Query requirements are provided by the corresponding domain QueryService. Gateway is called internally by domain objects through their own dependencies.
 
 ### Method Sequence Logic
 
 For each method, write execution steps (Mermaid sequenceDiagram or ordered list):
 1. **Parameter validation**: Non-null, format, business rules
-2. **Operation context**: Extract operatorId from context; permission check
-3. **Query through QueryService when needed**: If the use case needs reads or validation data, call the corresponding domain's QueryService; do NOT inject/call Repository from application
-4. **Build aggregate through Factory**: use only `Factory.create(...)` to build a new domain object from attributes, and `Factory.createByNum(...)` to build an existing domain object by business code; Factory must not contain `createById(...)`, `rebuild(...)`, or other methods; application must not directly `new` domain objects or call static `create` construction methods
-5. **Invoke domain action**: E.g., aggregate.record(...), aggregate.close(...). Gateway is called internally by the domain object through its own dependencies, not directly from the application layer.
-6. **Persist/Publish event**: performed inside domain actions through domain object dependencies; mark @Transactional on application method if needed
-7. **Assemble return**: Construct client DTO or business identifier return
+2. **Acquire Redis distributed lock**: Get a Redis lock keyed by business identifier (e.g., `num`, order number); set proper timeout to prevent deadlock
+3. **Operation context**: Extract operatorId from context; permission check
+4. **Query through QueryService when needed**: If the use case needs reads or validation data, call the corresponding domain's QueryService; do NOT inject/call Repository from application
+5. **Build aggregate through Factory**: use only `Factory.create(...)` to build a new domain object from attributes, and `Factory.createByNum(...)` to build an existing domain object by business code; Factory must not contain `createById(...)`, `rebuild(...)`, or other methods; application must not directly `new` domain objects or call static `create` construction methods
+6. **Invoke domain action**: E.g., aggregate.record(...), aggregate.close(...). Gateway is called internally by the domain object through its own dependencies, not directly from the application layer.
+7. **Persist/Publish event**: performed inside domain actions through domain object dependencies; mark @Transactional on application method if needed; transaction MUST be inside the lock scope (acquire lock first, then open transaction)
+8. **Release Redis distributed lock**: Release lock in `finally` block
+9. **Assemble return**: Construct client DTO or business identifier return
 
 **Example (FamilyCommandService.createFamily sequence)**:
 

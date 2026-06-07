@@ -5,15 +5,16 @@
 ## 强规约
 
 1. **命令服务 / 查询服务分离**：写操作进入 `CommandService`，读操作进入 `QueryService`。
-2. **应用层禁止调用 Repository**：任何应用层服务都不得注入或调用领域 Repository。
+2. **应用层禁止调用 Repository 与 Gateway**：任何应用层服务都不得注入或调用领域 Repository 或领域 Gateway。
 3. **命令服务通过工厂获取领域对象**：新建用 `create(...)`，按业务编码加载用 `createByNum(...)`。
 4. **查询通过查询服务**：命令服务如需查询/校验数据，调用对应领域的 `QueryService`。
 5. **`QueryService` 可注入 Mapper**：`QueryService` 做只读查询，可注入基础设施层 Mapper 并转客户端 DTO。
 6. **入参必须是 ParamDTO 类**：应用层方法参数必须使用 `XXXParamDTO` 类封装。
 7. **返回值只能是客户端 DTO 或业务标识**：不得返回 VO、领域对象、实体对象或应用层自定义对象。
-8. **事务边界在应用层**：需要事务时在应用层方法上声明。
-9. **每个服务方法必须有时序图**。
-10. **Spring Bean 注入必须使用 `@Resource`**：应用层服务注入 Factory、QueryService、Mapper 等 Spring Bean 时，必须使用 `@Resource`；禁止使用 `@Autowired`、构造器注入、Setter 注入或通过 `ApplicationContext` 手动获取 Bean。
+8. **事务边界在应用层**：需要事务时在应用层方法上声明；事务应内嵌在分布式锁区域内。
+9. **写操作必须使用 Redis 分布式锁**：CommandService 的写操作方法必须使用 Redis 分布式锁（如 Redisson `RLock`），锁 key 基于业务唯一标识（如 `num`、订单号），防止多实例并发重复请求；必须设置合理的锁超时防止死锁。
+10. **每个服务方法必须有时序图**。
+11. **Spring Bean 注入必须使用 `@Resource`**：应用层服务注入 Factory、QueryService、Mapper 等 Spring Bean 时，必须使用 `@Resource`；禁止使用 `@Autowired`、构造器注入、Setter 注入或通过 `ApplicationContext` 手动获取 Bean。
 
 ## 必选内容
 
@@ -81,4 +82,7 @@
 - [ ] 方法入参是否都是 XXXParamDTO？
 - [ ] 返回值是否没有 VO、实体对象、领域对象？
 - [ ] 每个服务方法是否有时序图？
+- [ ] 写操作是否使用了 Redis 分布式锁？
+- [ ] 应用层是否未注入或调用 Repository 或 Gateway？
+- [ ] 命令服务是否通过领域工厂获取领域对象？
 - [ ] Spring Bean 注入是否统一使用 `@Resource`，且未使用 `@Autowired`、构造器注入、Setter 注入或 `ApplicationContext` 手动获取？

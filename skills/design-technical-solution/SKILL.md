@@ -121,12 +121,12 @@ description: Produces technical solution documents from PRD input, structured fo
 
 6. **应用层设计（必选，当方案涉及 application 层时）**  
    与**领域层设计**一致：**先根据业务层级/业务模块划分，再按具体模块编写**；模块与「领域层设计」中的业务领域（如 4.2 用户、4.3 家庭、4.4 账本）一一对应，便于与 impl-application-module 落码对齐。详见 [application-layer-design-experience.md](references/application-layer-design-experience.md)。  
-   **应用层依赖硬约束**：application 层**禁止注入或调用任何 domain Repository 接口**；Repository 仅供领域对象、领域工厂及 infra 实现内部使用。CommandService 如需读取/校验其他数据，必须调用对应领域的 **QueryService** 方法；查询需求统一由对应领域的 QueryService 提供，QueryService 可通过 infra Mapper 做只读查询并返回 client DTO。  
+   **应用层依赖硬约束**：application 层**禁止注入或调用任何 domain Repository 接口**，**禁止注入或调用任何领域 Gateway 接口**；Repository 与 Gateway 仅供领域对象、领域工厂及 infra 实现内部使用。CommandService 如需读取/校验其他数据，必须调用对应领域的 **QueryService** 方法；查询需求统一由对应领域的 QueryService 提供，QueryService 可通过 infra Mapper 做只读查询并返回 client DTO。  
    **文档目录结构**：  
    - **二级目录**：先 **6.1 业务模块划分**（表格列出本方案涉及的 application 模块，与 4.1 业务层级/领域对应），再按**业务模块**分节（如 6.2 用户（user）、6.3 家庭（family）、6.4 账本（book）、6.5 账户（account）；若认证单独成模块可为 6.2 认证（auth）等）。  
    - **三级目录**：每个业务模块下包含——**Service 方法清单**（本模块的 Service、方法签名、职责、入参/出参）、**方法时序逻辑**（本模块关键方法的执行步骤或时序图）。  
    - 示例：`6.2 用户（user）` → `6.2.1 Service 方法清单`、`6.2.2 方法时序逻辑`；`6.3 家庭（family）` → `6.3.1 Service 方法清单`、`6.3.2 方法时序逻辑`；跨模块或公共的 Service（如导入、统计、公众号绑定）可单独成节（如 6.x 导入（import）、6.x 统计（stats））。  
-   - **方法时序逻辑**内容要求：**设计出的所有 Service 方法都须有时序图**描述实现逻辑；每个方法配一张 Mermaid sequenceDiagram（或等价图），表达步骤顺序。CommandService 步骤通常为：1. 参数校验 2. 解析操作人/鉴权 3. 如需查询则调用对应领域 QueryService 4. 通过 Factory 创建/加载领域对象 5. 调用领域动作（领域对象内部通过其持有的 Gateway/Repository/DomainEventPublisher 完成外部协作与事件发布）6. 返回。禁止出现 application 直接调用 Repository 或 Gateway 的步骤。跨 Service 调用、事务边界须标明。  
+   - **方法时序逻辑**内容要求：**设计出的所有 Service 方法都须有时序图**描述实现逻辑；每个方法配一张 Mermaid sequenceDiagram（或等价图），表达步骤顺序。CommandService 步骤通常为：1. 参数校验 2. 获取 Redis 分布式锁（锁 key 基于业务唯一标识，如 num）3. 解析操作人/鉴权 4. 如需查询则调用对应领域 QueryService 5. 通过 Factory 创建/加载领域对象 6. 调用领域动作（领域对象内部通过其持有的 Gateway/Repository/DomainEventPublisher 完成外部协作与事件发布）7. 释放 Redis 分布式锁 8. 返回。禁止出现 application 直接调用 Repository 或 Gateway 的步骤。事务边界须内嵌在锁区域内（先获取锁，再开启事务）。跨 Service 调用须标明。  
    详见 [implementation-layers.md](references/implementation-layers.md) 中「**应用层设计：Service 方法与时序逻辑**」小节。
 
 7. **Adapter 层设计（必选，当方案涉及 adapter 层时）**  
@@ -212,7 +212,7 @@ description: Produces technical solution documents from PRD input, structured fo
 - [ ] 领域/聚合命名在各层一致（如 conversation、message、auth），便于各 skill 的包结构约定对齐。
 - [ ] 若涉及 Agent，在 application 与 adapter 的变更中明确是 Agent 子包结构（config/hook/interceptor/service/tool、单一 AgentService）。
 - [ ] **设计出的所有方法/入口都须有时序图**：领域动作、应用层每个 Service 方法、Adapter 层每个 HTTP 接口/定时任务/事件监听入口均配有时序图描述实现逻辑。
-- [ ] **应用层设计**先**业务模块划分**（6.1），再**按业务模块为二级目录**，每模块下含 **Service 方法清单**与**方法时序逻辑**（**每个方法一张时序图**）；与领域层设计中的业务领域对应；application 中未注入/调用任何 Repository，查询需求均通过对应领域 QueryService 提供；Spring Bean 注入统一使用 `@Resource`。
+- [ ] **应用层设计**先**业务模块划分**（6.1），再**按业务模块为二级目录**，每模块下含 **Service 方法清单**与**方法时序逻辑**（**每个方法一张时序图**）；与领域层设计中的业务领域对应；application 中未注入/调用任何 Repository 或 Gateway，查询需求均通过对应领域 QueryService 提供；CommandService 写操作已设计 Redis 分布式锁；Spring Bean 注入统一使用 `@Resource`。
 - [ ] **Adapter 层设计**覆盖 HTTP Controller、定时任务、事件监听等外部触发入口；HTTP 仅使用 **GET（查询）**与 **POST（增删改）**，每个接口的入参与返回值用 **JSON** 描述；每个接口/任务/监听入口均有时序图；定时任务说明 cron、幂等、并发与告警；事件监听说明 topic/tag/事件类型、幂等、重试/DLQ 与告警；与应用层、领域模块对应；Spring Bean 注入统一使用 `@Resource`。
 
 ## 使用完成后的最后一步：更新知识图谱
