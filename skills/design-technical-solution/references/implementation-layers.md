@@ -28,7 +28,7 @@ For each method, write execution steps (Mermaid sequenceDiagram or ordered list)
 | 1 | Validate: name, ownerId non-null | — |
 | 2 | Operator: operatorId from context; verify consistency with ownerId or admin role | — |
 | 3 | Verify: owner exists through UserQueryService | UserQueryService.existsByNum(ownerNum) |
-| 4 | Create family aggregate through Factory: familyFactory.create(name, ownerNum) | FamilyFactory |
+| 4 | Create family aggregate through Factory: familyFactory.create(name) | FamilyFactory；create 仅接收用户创建家庭时填写的字段 |
 | 5 | Invoke domain action: family.save(operatorId) | Family aggregate handles persistence/event internally |
 | 6 | Return: family num or client DTO | String or client DTO |
 

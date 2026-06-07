@@ -9,6 +9,7 @@
 3. **避免业务污染**：具体业务常量、业务状态、业务 DTO 不应放在门面层；应放在对应 领域层或客户端层模块。
 4. **事件基础契约统一**：领域事件的基础结构（如事件 ID、类型、发送者、数据载荷）应统一设计，不允许每个领域重复定义一套事件基类。
 5. **保持稳定性**：门面层是被多层依赖的基础模块，字段、方法、泛型变更要谨慎说明兼容影响。
+6. **Spring Bean 注入必须使用 `@Resource`**：如涉及门面层接口的 Spring 实现类（例如基础设施层实现 `DomainEventPublisher`），注入 Spring Bean 时必须使用 `@Resource`；禁止使用 `@Autowired`、构造器注入、Setter 注入或通过 `ApplicationContext` 手动获取 Bean。
 
 ## 必选内容
 
@@ -55,3 +56,4 @@
 - [ ] 是否避免将业务领域逻辑放入门面层？
 - [ ] 修改已有门面层类型时是否说明兼容影响？
 - [ ] 门面层设计是否能对应 impl-facade-module 的实现项？
+- [ ] 如涉及 Spring Bean 注入，是否统一使用 `@Resource`，且未使用 `@Autowired`、构造器注入、Setter 注入或 `ApplicationContext` 手动获取？

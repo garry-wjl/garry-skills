@@ -27,6 +27,16 @@ Guides implementing the **client** module：对外暴露的数据契约与通用
 - **命名**：*Param（入参）、*DTO（传输）、*VO（视图/返回）；列表查询可用 *ListParams、*ListVO。
 - **统一响应**：若项目约定统一格式为 `{ code, message, data }`，在 client 中定义 `Result<T>`（如 `Result.ok(data)`、`Result.fail(msg)`），adapter 统一返回该类型。
 
+
+
+## Spring Bean 注入约束
+
+- **必须使用 `@Resource` 注入**：在 Spring 中注入 Bean 时，必须使用 `@Resource` 注解进行字段注入；禁止使用 `@Autowired`、构造器注入、Setter 注入或通过 `ApplicationContext` 手动获取 Bean。若某模块规则进一步限制可注入类型（如 RepositoryImpl 仅允许注入 Mapper），则同时遵守该模块的更严格约束。
+
+## 后端基础工具优先级
+
+- **Hutool 优先**：在后端开发过程中，凡涉及字符串判断、集合判空、对象判空、日期处理、类型转换、JSON 辅助、加解密、随机值、ID 生成等基础工具操作，务必优先使用 **Hutool**（如 `StrUtil`、`CollUtil`、`ObjectUtil`、`DateUtil`、`Convert` 等）。只有在 Hutool 中找不到合适能力或无法满足业务/性能/安全要求时，才考虑 JDK 原生工具、Spring 工具类或其他第三方方案。
+
 ## 规则
 
 1. client 中类仅做数据承载与校验注解（如 `@NotNull`、`@Size`）；不写业务逻辑或调用 domain/infra。

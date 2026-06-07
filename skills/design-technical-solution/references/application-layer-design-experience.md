@@ -13,6 +13,7 @@
 7. **返回值只能是客户端 DTO 或业务标识**：不得返回 VO、领域对象、实体对象或应用层自定义对象。
 8. **事务边界在应用层**：需要事务时在应用层方法上声明。
 9. **每个服务方法必须有时序图**。
+10. **Spring Bean 注入必须使用 `@Resource`**：应用层服务注入 Factory、QueryService、Mapper 等 Spring Bean 时，必须使用 `@Resource`；禁止使用 `@Autowired`、构造器注入、Setter 注入或通过 `ApplicationContext` 手动获取 Bean。
 
 ## 必选内容
 
@@ -38,7 +39,7 @@
 1. 参数校验
 2. 获取 operatorId
 3. 如需校验用户存在，调用 UserQueryService
-4. 通过 OrderFactory.create(...) 创建领域对象
+4. 通过 OrderFactory.create(items, remark) 创建领域对象（create 只传用户创建订单时填写的字段）
 5. 调用 order.save(operatorId)
 6. 返回 orderNum
 ```
@@ -80,3 +81,4 @@
 - [ ] 方法入参是否都是 XXXParamDTO？
 - [ ] 返回值是否没有 VO、实体对象、领域对象？
 - [ ] 每个服务方法是否有时序图？
+- [ ] Spring Bean 注入是否统一使用 `@Resource`，且未使用 `@Autowired`、构造器注入、Setter 注入或 `ApplicationContext` 手动获取？

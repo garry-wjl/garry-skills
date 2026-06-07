@@ -31,7 +31,7 @@
 - Factory 接口定义在 domain 层。
 - FactoryImpl 实现在 infra 层。
 - Factory **只能包含两个方法**：
-  - `create(...)`：根据属性构建新的领域对象
+  - `create(...)`：根据创建该领域对象时用户可能填写的业务字段构建新的领域对象
   - `createByNum(...)`：根据业务编码 `num` 通过 Repository 获取数据并构建既有领域对象
 - 禁止设计 `createById(...)`、`rebuild(...)` 或其他任何工厂方法。
 - application 层不得直接 `new` 领域对象，也不得直接调用领域对象静态 `create` 方法构建对象。
@@ -65,7 +65,7 @@ void deleteByNum(String num);
 classDiagram
     class ConversationFactory {
         <<factory interface>>
-        +create(title, creatorId) Conversation
+        +create(title) Conversation
         +createByNum(conversationNum) Conversation
     }
     class ConversationGateway {
@@ -156,13 +156,14 @@ classDiagram
 
 | Factory | 方法 | 入参 | 返回值 | 职责 | 依赖 |
 |---------|------|------|--------|------|------|
-| ConversationFactory | create | title, creatorId | Conversation | 根据属性构建新的 Conversation 领域对象 | ConversationGateway |
+| ConversationFactory | create | title | Conversation | 根据用户填写的标题构建新的 Conversation 领域对象 | ConversationGateway |
 | ConversationFactory | createByNum | conversationNum | Conversation | 根据业务编码通过 Repository 获取数据并构建既有 Conversation 领域对象 | ConversationRepository |
 
 强制要求：
 
 - Factory 只允许 `create(...)` 与 `createByNum(...)` 两个方法。
 - 两个方法都用于构建领域对象。
+- `create(...)` 的入参只能是创建该领域对象时用户可能填写的业务字段，不包含 `operatorId`、创建人/更新人、状态、审计字段、系统生成编号、默认值、流程流转字段等用户不可见且用于内部流转的内容。
 - `create(...)` 不做复杂业务编排。
 - `createByNum(...)` 通过 Repository 的 `findByNum(num)` 获取数据。
 - 不允许 `createById(...)`、`rebuild(...)` 或其他方法。
@@ -215,6 +216,7 @@ classDiagram
 - [ ] 每个聚合根是否有且仅有一个 Factory？
 - [ ] 每个 Factory 是否只包含 create(...) 与 createByNum(...)？
 - [ ] create(...) 与 createByNum(...) 是否都用于构建领域对象？
+- [ ] create(...) 的参数是否只包含用户创建领域对象时可能填写的业务字段，且不包含操作人、状态、审计字段、系统生成编号等内部流转字段？
 - [ ] 是否设计了领域网关 Gateway，且定义在 domain、实现在 infra？
 - [ ] Repository 是否只有 save/findByNum/deleteByNum？
 - [ ] 聚合之间是否只通过 ID/num 引用？
