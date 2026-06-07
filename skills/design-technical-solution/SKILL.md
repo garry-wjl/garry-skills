@@ -79,6 +79,7 @@ description: Produces technical solution documents from PRD input, structured fo
 
    - **领域模型**（如 4.x.1）  
      - **基本属性（强制）**：聚合根与实体须有 **id**、**num**、**create_no**、**update_no**；聚合根还必须持有领域协作依赖属性：**Repository（仓储）**、**Gateway（领域网关）**、**DomainEventPublisher（领域事件发布器）**；值对象无需。  
+     - **软删除标记约束（强制）**：软删除标记（如 `is_deleted`、`deleted`、`isDeleted`）不得出现在聚合根或领域实体中；软删除属于持久化实现细节，只能出现在数据库表与 infra Entity 中。  
      - **必备动作（强制）**：聚合根及可持久化实体须有 **save(operatorId)**、**delete(operatorId)**；**所有领域动作须带操作人参数**。  
      - **表现形式**：**领域类图 + 表格**。类图表达类名、属性（含类型）、关联；表格体现领域结构（对象、类型、属性、与其它对象关系）。  
      - **聚合与边界**：本领域聚合边界、聚合根及聚合内实体/值对象；一致性边界；跨聚合仅 ID 引用；Repository/Factory/Gateway 方法清单或类图。
@@ -93,7 +94,8 @@ description: Produces technical solution documents from PRD input, structured fo
    - **领域工厂**（如 4.x.4）  
      - **强制设计领域工厂（Factory）接口**：每个聚合根必须设计对应 `*Factory`，由 domain 层定义接口，infra 层实现。  
      - **对象构建约束**：聚合根、实体等领域对象的创建、加载、重建必须通过领域工厂完成；application 层不得直接 `new` 领域对象，也不得直接调用领域对象静态 `create` 方法构建对象。  
-     - **方法清单**：使用表格列出工厂方法，列：Factory、方法名、入参、返回值、职责、依赖。领域工厂**只能包含两个方法**：`create(...)`（根据属性构建新的领域对象）、`createByNum(...)`（根据业务编码 num 构建既有领域对象，方法内部通过 Repository 获取并构建领域对象）。不得设计 `createById(...)`、`rebuild(...)` 或其他工厂方法。  
+     - **方法清单**：使用表格列出工厂方法，列：Factory、方法名、入参、返回值、职责、依赖。领域工厂**只能包含两个方法**：`create(...)`（根据创建该领域对象时用户可能填写的业务字段构建新的领域对象）、`createByNum(...)`（根据业务编码 num 构建既有领域对象，方法内部通过 Repository 获取并构建领域对象）。不得设计 `createById(...)`、`rebuild(...)` 或其他工厂方法。  
+     - **create 参数约束**：`create(...)` 的入参只能是创建该领域对象时用户可能填写的字段；不得包含 `operatorId`、创建人/更新人、状态、审计字段、系统生成编号、默认值、流程流转字段等用户不可见且用于内部流转的内容。  
      - **时序说明**：`create(...)` 与 `createByNum(...)` 都用于构建领域对象；`createByNum(...)` 的时序须体现通过 Repository/仓储获取数据并构建领域对象。
 
    - **领域网关**（如 4.x.5）  
@@ -119,12 +121,12 @@ description: Produces technical solution documents from PRD input, structured fo
 
 6. **应用层设计（必选，当方案涉及 application 层时）**  
    与**领域层设计**一致：**先根据业务层级/业务模块划分，再按具体模块编写**；模块与「领域层设计」中的业务领域（如 4.2 用户、4.3 家庭、4.4 账本）一一对应，便于与 impl-application-module 落码对齐。详见 [application-layer-design-experience.md](references/application-layer-design-experience.md)。  
-   **应用层依赖硬约束**：application 层**禁止注入或调用任何 domain Repository 接口**；Repository 仅供领域对象、领域工厂及 infra 实现内部使用。CommandService 如需读取/校验其他数据，必须调用对应领域的 **QueryService** 方法；查询需求统一由对应领域的 QueryService 提供，QueryService 可通过 infra Mapper 做只读查询并返回 client DTO。  
+   **应用层依赖硬约束**：application 层**禁止注入或调用任何 domain Repository 接口**，**禁止注入或调用任何领域 Gateway 接口**；Repository 与 Gateway 仅供领域对象、领域工厂及 infra 实现内部使用。CommandService 如需读取/校验其他数据，必须调用对应领域的 **QueryService** 方法；查询需求统一由对应领域的 QueryService 提供，QueryService 可通过 infra Mapper 做只读查询并返回 client DTO。  
    **文档目录结构**：  
    - **二级目录**：先 **6.1 业务模块划分**（表格列出本方案涉及的 application 模块，与 4.1 业务层级/领域对应），再按**业务模块**分节（如 6.2 用户（user）、6.3 家庭（family）、6.4 账本（book）、6.5 账户（account）；若认证单独成模块可为 6.2 认证（auth）等）。  
    - **三级目录**：每个业务模块下包含——**Service 方法清单**（本模块的 Service、方法签名、职责、入参/出参）、**方法时序逻辑**（本模块关键方法的执行步骤或时序图）。  
    - 示例：`6.2 用户（user）` → `6.2.1 Service 方法清单`、`6.2.2 方法时序逻辑`；`6.3 家庭（family）` → `6.3.1 Service 方法清单`、`6.3.2 方法时序逻辑`；跨模块或公共的 Service（如导入、统计、公众号绑定）可单独成节（如 6.x 导入（import）、6.x 统计（stats））。  
-   - **方法时序逻辑**内容要求：**设计出的所有 Service 方法都须有时序图**描述实现逻辑；每个方法配一张 Mermaid sequenceDiagram（或等价图），表达步骤顺序。CommandService 步骤通常为：1. 参数校验 2. 解析操作人/鉴权 3. 如需查询则调用对应领域 QueryService 4. 通过 Factory 创建/加载领域对象 5. 调用领域动作或 Gateway 6. 持久化/发布事件 7. 组装返回。禁止出现 application 直接调用 Repository 的步骤。跨 Service 调用、事务边界须标明。  
+   - **方法时序逻辑**内容要求：**设计出的所有 Service 方法都须有时序图**描述实现逻辑；每个方法配一张 Mermaid sequenceDiagram（或等价图），表达步骤顺序。CommandService 步骤通常为：1. 参数校验 2. 获取 Redis 分布式锁（锁 key 基于业务唯一标识，如 num）3. 解析操作人/鉴权 4. 如需查询则调用对应领域 QueryService 5. 通过 Factory 创建/加载领域对象 6. 调用领域动作（领域对象内部通过其持有的 Gateway/Repository/DomainEventPublisher 完成外部协作与事件发布）7. 释放 Redis 分布式锁 8. 返回。禁止出现 application 直接调用 Repository 或 Gateway 的步骤。事务边界须内嵌在锁区域内（先获取锁，再开启事务）。跨 Service 调用须标明。  
    详见 [implementation-layers.md](references/implementation-layers.md) 中「**应用层设计：Service 方法与时序逻辑**」小节。
 
 7. **Adapter 层设计（必选，当方案涉及 adapter 层时）**  
@@ -202,16 +204,16 @@ description: Produces technical solution documents from PRD input, structured fo
 - [ ] **领域层设计**按**业务领域为二级目录**（如 4.2 用户、4.3 家庭、4.4 账本…），每个业务领域下包含**六个三级目录**：**领域模型**、**领域动作**、**领域规则**、**领域工厂**、**领域网关**、**领域事件**；各节内容符合上条（类图+表格、动作表+每动作一时序图、规则表、工厂方法表、网关方法表、事件表）；与模块变更清单中 domain 层描述一致。
 - [ ] 每个聚合根已设计对应 **Factory 接口**，且 Factory 只包含 `create(...)` 与 `createByNum(...)` 两个方法；两个方法都用于构建领域对象；application 层不直接 new 领域对象、不直接调用领域对象静态 create 构建对象。
 - [ ] 领域网关 Gateway 接口已定义在 domain 层，并明确由 infra 层实现 GatewayImpl。
-- [ ] 所有聚合根与实体已具备**基本属性** id、num、create_no、update_no；聚合根已具备 Repository、Gateway、DomainEventPublisher 三类领域协作依赖属性；均具备 **save**、**delete** 领域动作；**所有领域动作均包含操作人参数**（如 operatorId）。
-- [ ] **基础设施层设计**已覆盖 Entity、Mapper、RepositoryImpl、FactoryImpl、GatewayImpl 与 common 能力；RepositoryImpl 不作为 application 查询入口；与数据库设计和 domain 接口一致；若无 infra 变化，已明确写出「本次无基础设施层变更」。
+- [ ] 所有聚合根与实体已具备**基本属性** id、num、create_no、update_no；聚合根已具备 Repository、Gateway、DomainEventPublisher 三类领域协作依赖属性；聚合根与领域实体中未出现 is_deleted/deleted/isDeleted 等软删除标记；均具备 **save**、**delete** 领域动作；**所有领域动作均包含操作人参数**（如 operatorId）。
+- [ ] **基础设施层设计**已覆盖 Entity、Mapper、RepositoryImpl、FactoryImpl、GatewayImpl 与 common 能力；RepositoryImpl 不作为 application 查询入口；与数据库设计和 domain 接口一致；Spring Bean 注入统一使用 `@Resource`，未使用 `@Autowired`、构造器注入、Setter 注入或 `ApplicationContext` 手动获取；若无 infra 变化，已明确写出「本次无基础设施层变更」。
 - [ ] **数据库设计**已包含表结构、**DDL 语句**（可直接执行），若涉及刷数则含 **DML 语句**；与领域对应关系及模块变更清单中 infra 层描述一致；**各表主键 `id` 为 `BIGINT` 且自增**；**`create_time`/`update_time` 命名且时间类型毫秒精度**（见 §8 / reference 数据库模块）。
 - [ ] **代码分支命名**已填写：需求类为 `feature-YYYYMMDD-英文名`，BUG 修复类为 `hotfix-YYYYMMDD-英文名`；方案中写出本条对应的具体分支名。
 - [ ] 实现顺序与六层依赖一致，不出现「先写 adapter 再写 domain」等逆依赖。
 - [ ] 领域/聚合命名在各层一致（如 conversation、message、auth），便于各 skill 的包结构约定对齐。
 - [ ] 若涉及 Agent，在 application 与 adapter 的变更中明确是 Agent 子包结构（config/hook/interceptor/service/tool、单一 AgentService）。
 - [ ] **设计出的所有方法/入口都须有时序图**：领域动作、应用层每个 Service 方法、Adapter 层每个 HTTP 接口/定时任务/事件监听入口均配有时序图描述实现逻辑。
-- [ ] **应用层设计**先**业务模块划分**（6.1），再**按业务模块为二级目录**，每模块下含 **Service 方法清单**与**方法时序逻辑**（**每个方法一张时序图**）；与领域层设计中的业务领域对应；application 中未注入/调用任何 Repository，查询需求均通过对应领域 QueryService 提供。
-- [ ] **Adapter 层设计**覆盖 HTTP Controller、定时任务、事件监听等外部触发入口；HTTP 仅使用 **GET（查询）**与 **POST（增删改）**，每个接口的入参与返回值用 **JSON** 描述；每个接口/任务/监听入口均有时序图；定时任务说明 cron、幂等、并发与告警；事件监听说明 topic/tag/事件类型、幂等、重试/DLQ 与告警；与应用层、领域模块对应。
+- [ ] **应用层设计**先**业务模块划分**（6.1），再**按业务模块为二级目录**，每模块下含 **Service 方法清单**与**方法时序逻辑**（**每个方法一张时序图**）；与领域层设计中的业务领域对应；application 中未注入/调用任何 Repository 或 Gateway，查询需求均通过对应领域 QueryService 提供；CommandService 写操作已设计 Redis 分布式锁；Spring Bean 注入统一使用 `@Resource`。
+- [ ] **Adapter 层设计**覆盖 HTTP Controller、定时任务、事件监听等外部触发入口；HTTP 仅使用 **GET（查询）**与 **POST（增删改）**，每个接口的入参与返回值用 **JSON** 描述；每个接口/任务/监听入口均有时序图；定时任务说明 cron、幂等、并发与告警；事件监听说明 topic/tag/事件类型、幂等、重试/DLQ 与告警；与应用层、领域模块对应；Spring Bean 注入统一使用 `@Resource`。
 
 ## 使用完成后的最后一步：更新知识图谱
 

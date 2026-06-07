@@ -8,18 +8,20 @@ For each service (CommandService, QueryService, StreamService), specify:
 - **Method signature**: Name, input type (ParamDTO class), return type (client DTO, void, String/Long business identifier)
 - **Responsibility**: One-line business use case description
 - **Input/Output**: Key fields or reference ParamDTO/DTO names
-- **Repository constraint**: Application services MUST NOT inject or call domain Repository interfaces. Query requirements are provided by the corresponding domain QueryService.
+- **Repository/Gateway constraint**: Application services MUST NOT inject or call domain Repository or Gateway interfaces. Query requirements are provided by the corresponding domain QueryService. Gateway is called internally by domain objects through their own dependencies.
 
 ### Method Sequence Logic
 
 For each method, write execution steps (Mermaid sequenceDiagram or ordered list):
 1. **Parameter validation**: Non-null, format, business rules
-2. **Operation context**: Extract operatorId from context; permission check
-3. **Query through QueryService when needed**: If the use case needs reads or validation data, call the corresponding domain's QueryService; do NOT inject/call Repository from application
-4. **Build aggregate through Factory**: use only `Factory.create(...)` to build a new domain object from attributes, and `Factory.createByNum(...)` to build an existing domain object by business code; Factory must not contain `createById(...)`, `rebuild(...)`, or other methods; application must not directly `new` domain objects or call static `create` construction methods
-5. **Invoke domain action or Gateway**: E.g., aggregate.record(...), aggregate.close(...), CategorySuggestGateway.suggest(...)
-6. **Persist/Publish event**: performed inside domain actions through domain object dependencies; mark @Transactional on application method if needed
-7. **Assemble return**: Construct client DTO or business identifier return
+2. **Acquire Redis distributed lock**: Get a Redis lock keyed by business identifier (e.g., `num`, order number); set proper timeout to prevent deadlock
+3. **Operation context**: Extract operatorId from context; permission check
+4. **Query through QueryService when needed**: If the use case needs reads or validation data, call the corresponding domain's QueryService; do NOT inject/call Repository from application
+5. **Build aggregate through Factory**: use only `Factory.create(...)` to build a new domain object from attributes, and `Factory.createByNum(...)` to build an existing domain object by business code; Factory must not contain `createById(...)`, `rebuild(...)`, or other methods; application must not directly `new` domain objects or call static `create` construction methods
+6. **Invoke domain action**: E.g., aggregate.record(...), aggregate.close(...). Gateway is called internally by the domain object through its own dependencies, not directly from the application layer.
+7. **Persist/Publish event**: performed inside domain actions through domain object dependencies; mark @Transactional on application method if needed; transaction MUST be inside the lock scope (acquire lock first, then open transaction)
+8. **Release Redis distributed lock**: Release lock in `finally` block
+9. **Assemble return**: Construct client DTO or business identifier return
 
 **Example (FamilyCommandService.createFamily sequence)**:
 
@@ -28,7 +30,7 @@ For each method, write execution steps (Mermaid sequenceDiagram or ordered list)
 | 1 | Validate: name, ownerId non-null | — |
 | 2 | Operator: operatorId from context; verify consistency with ownerId or admin role | — |
 | 3 | Verify: owner exists through UserQueryService | UserQueryService.existsByNum(ownerNum) |
-| 4 | Create family aggregate through Factory: familyFactory.create(name, ownerNum) | FamilyFactory |
+| 4 | Create family aggregate through Factory: familyFactory.create(name) | FamilyFactory；create 仅接收用户创建家庭时填写的字段 |
 | 5 | Invoke domain action: family.save(operatorId) | Family aggregate handles persistence/event internally |
 | 6 | Return: family num or client DTO | String or client DTO |
 
@@ -113,14 +115,14 @@ For each adapter entry (Mermaid sequenceDiagram or ordered list):
 - `create_no`: Creator ID (VARCHAR)
 - `update_no`: Last updater ID (VARCHAR)
 - Unique key on `num` field: `UNIQUE KEY uk_xxx_num (num)`
-- Logical delete: `is_deleted INT (0 = not deleted, 1 = deleted)` with `@TableLogic`
+- 软删除字段：如需软删除，可在数据库表与 infra Entity 中使用 `is_deleted INT (0 = 未删除, 1 = 已删除)` 和 `@TableLogic`；该字段不得出现在聚合根或领域实体中。
 
 ### Table Structure Template
 
 | Table | Description | Main Fields | Indexes |
 |-------|------------|------------|---------|
-| conversation | Conversation AR | **id(PK, BIGINT AI)**, num, create_no, update_no, title, status, **create_time(3)**, **update_time(3)**, is_deleted | num(UK), status, create_no |
-| message | Message Entity | **id(PK, BIGINT AI)**, num, create_no, update_no, conversation_id(BIGINT FK), content, sender_id, **create_time(3)**, **update_time(3)**, is_deleted | conversation_id, num |
+| conversation | Conversation 聚合根对应表 | **id(PK, BIGINT AI)**, num, create_no, update_no, title, status, **create_time(3)**, **update_time(3)**, is_deleted（仅 DB/Entity） | num(UK), status, create_no |
+| message | Message 实体对应表 | **id(PK, BIGINT AI)**, num, create_no, update_no, conversation_id(BIGINT FK), content, sender_id, **create_time(3)**, **update_time(3)**, is_deleted（仅 DB/Entity） | conversation_id, num |
 
 **Mapping**: `conversation` table ← Conversation AR; `message` table ← Message entity (logically belongs to Conversation)
 

@@ -12,6 +12,7 @@
 6. **Entity 不暴露给上层**：应用层、领域层、适配层不应直接使用 基础设施 Entity。
 7. **Gateway 接口定义在领域层，实现在基础设施层**：领域层定义 Gateway 接口，基础设施层提供 GatewayImpl；第三方服务、编号生成、外部客户端 调用等通过 GatewayImpl 实现。
 8. **事务边界不在 RepositoryImpl 中设计**：事务在应用层方法上声明。
+9. **Spring Bean 注入必须使用 `@Resource`**：基础设施层允许注入的 Bean（如 Mapper、Repository、外部客户端等）必须使用 `@Resource`；禁止使用 `@Autowired`、构造器注入、Setter 注入或通过 `ApplicationContext` 手动获取 Bean。若某类有更严格注入限制（如 RepositoryImpl 仅允许注入 Mapper），同时遵守更严格限制。
 
 ## 必选内容
 
@@ -78,3 +79,5 @@ Entity ↔ 领域对象转换应是字段映射和简单常量转换，不应引
 - [ ] Gateway 接口是否定义在领域层，GatewayImpl 是否实现在基础设施层并承接外部能力？
 - [ ] 是否没有把Entity 暴露给应用层、领域层、适配层？
 - [ ] 是否没有把 RepositoryImpl 设计为应用层查询入口？
+- [ ] Mapper 操作是否统一使用 `LambdaQueryWrapper<Entity>`（查询）和 `LambdaUpdateWrapper<Entity>`（更新），且未使用字符串列名的 `QueryWrapper`/`UpdateWrapper`？
+- [ ] Spring Bean 注入是否统一使用 `@Resource`，且未使用 `@Autowired`、构造器注入、Setter 注入或 `ApplicationContext` 手动获取？

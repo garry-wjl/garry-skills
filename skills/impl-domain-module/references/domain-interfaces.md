@@ -24,7 +24,7 @@ public interface ConversationRepository {
 
 Path: `domain/conversation/factory/ConversationFactory.java`
 
-Factory **MUST contain exactly two methods only**: **create**, **createByNum**. Both methods build domain objects. `create(...)` builds a new domain object from attributes. **createByNum(String num)** in infra implementation **MUST only delegate** to repository's **findByNum(num)** to load/build the existing domain object by business code. No `createById(...)`, `rebuild(...)`, or other Factory methods are allowed.
+Factory **MUST contain exactly two methods only**: **create**, **createByNum**. Both methods build domain objects. `create(...)` only accepts business fields that users may fill when creating the domain object; it MUST NOT include operator, creator/updater, status, audit fields, generated business number, default values, or workflow/internal transition fields. **createByNum(String num)** in infra implementation **MUST only delegate** to repository's **findByNum(num)** to load/build the existing domain object by business code. No `createById(...)`, `rebuild(...)`, or other Factory methods are allowed.
 
 ```java
 package BASE_PACKAGE.domain.conversation.factory;

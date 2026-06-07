@@ -12,6 +12,7 @@
 6. **定时任务必须说明幂等和并发控制**。
 7. **事件监听必须说明消费幂等、重试、DLQ 和告警**。
 8. **适配层只依赖应用层和客户端层**：不直接依赖领域层或基础设施层实现细节。
+9. **Spring Bean 注入必须使用 `@Resource`**：适配层注入应用层服务、配置组件等 Spring Bean 时，必须使用 `@Resource`；禁止使用 `@Autowired`、构造器注入、Setter 注入或通过 `ApplicationContext` 手动获取 Bean。
 
 ## 必选内容
 
@@ -82,3 +83,4 @@ HTTP 返回错误码；MQ 走重试/DLQ；定时任务走告警/补偿。
 - [ ] 事件监听是否说明来源、载荷、幂等、重试/DLQ、告警？
 - [ ] 适配层是否没有写业务逻辑？
 - [ ] 适配层是否只依赖应用层和客户端层？
+- [ ] Spring Bean 注入是否统一使用 `@Resource`，且未使用 `@Autowired`、构造器注入、Setter 注入或 `ApplicationContext` 手动获取？
