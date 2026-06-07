@@ -59,7 +59,7 @@ Guides implementing the **domain** module：领域层，承载领域模型与领
 - **跨领域**内容仍仅放在 **`domain/common`**（本规则不约束 common）。
 
 - 每个领域子包下**逻辑职责**划分如下：
-  - **根实体**：聚合根（如 `Conversation`、`Message`），放在领域包根下；使用 **@Getter / @Setter**；继承 facade 的 `DomainEntity` 后，**必须完整实现其全部抽象方法**（`domainValidate()`、`save(operatorId)`、`delete(operatorId)`），不得只实现部分或留空；**每次完成领域操作后都必须发送领域事件**（save、delete 及任何会改变状态或持久化的领域方法，在六步最后一步发送对应类型事件）；事件通过注入的 `DomainEventPublisher` 发送，事件类型使用 common 中的 **DomainEventConstant**。**每个聚合根**须将**仓储、网关、领域事件发布器**定义为该对象的**属性**；实体按需持有其业务行为所需的领域协作依赖。聚合根必须**提供传入必填字段的构造方法**：构造方法传入构建该领域对象所必须的数据字段（含仓储、网关、领域事件发布器），**不包含由状态机控制的状态字段**——状态字段应通过**领域方法**进行初始化与流转。
+  - **根实体**：聚合根（如 `Conversation`、`Message`），放在领域包根下；使用 **@Getter / @Setter**；继承 facade 的 `DomainEntity` 后，**必须完整实现其全部抽象方法**（`domainValidate()`、`save(operatorId)`、`delete(operatorId)`），不得只实现部分或留空；**每次完成领域操作后都必须发送领域事件**（save、delete 及任何会改变状态或持久化的领域方法，在六步最后一步发送对应类型事件）；事件通过注入的 `DomainEventPublisher` 发送，事件类型使用 common 中的 **DomainEventConstant**。**每个聚合根**须将**仓储、网关、领域事件发布器**定义为该对象的**属性**；实体按需持有其业务行为所需的领域协作依赖；**聚合根与领域实体不得包含 is_deleted/deleted/isDeleted 等软删除标记**。聚合根必须**提供传入必填字段的构造方法**：构造方法传入构建该领域对象所必须的数据字段（含仓储、网关、领域事件发布器），**不包含由状态机控制的状态字段**——状态字段应通过**领域方法**进行初始化与流转。
   - **repository/**：仓储**接口**为**固定三方法契约**，**仅允许**以下签名（领域根类型 `R` 随聚合替换）：`void save(R aggregate)`、`R findByNum(String num)`、`void deleteByNum(String num)`。**禁止**在此接口上声明任何其他方法（包括但不限于 `build*By`、`findById`、`findByEmail`、列表查询、`new*ForCreate`、统计等）；**不得**扩张 Repository 接口。参数与返回值为 domain 实体，**不**出现 infra 类型。
   - **factory/**：工厂**接口**，**只能包含两个方法**：**create(必填字段…)**、**createByNum(String num)**；两个方法都用于构建领域对象；`create(...)` 根据属性构建新的领域对象，`createByNum` **必须**等价于委托 `repository.findByNum(num)` 按业务编码加载并构建既有领域对象；**禁止**定义 `createById(...)`、`rebuild(...)` 或其他任何工厂方法；返回 domain 实体；实现类在 infra。
   - **gateway/**：网关**接口**，至少包含**生成业务编码**的方法。**范围**：除上述三方法仓储外的**所有出站/读模型协作**均放在 **gateway/**（由 infra 实现），例如：第三方 HTTP、编号规则、`FamilyRoleGateway` 式权限、以及**按主键/邮箱/列表/分页等持久化读接口**（命名可为 `XxxReadGateway` / `XxxReadPort` 等，但**源文件必须位于 `gateway/` 包内**）。**禁止**为读能力单建 `query/` 等目录。
@@ -98,7 +98,7 @@ Guides implementing the **domain** module：领域层，承载领域模型与领
 
 | 目录 | 职能 |
 |------|------|
-| **根实体** | 聚合根，放在领域包根下；继承 DomainEntity 并**完整实现其全部抽象方法**（domainValidate、save、delete）；每次领域操作完成后发送领域事件；将仓储、网关、领域事件发布器定义为聚合根属性；提供传入必填字段（含仓储、网关、领域事件发布器，不含状态）的构造方法；状态通过领域方法初始化与流转；封装领域行为。 |
+| **根实体** | 聚合根，放在领域包根下；继承 DomainEntity 并**完整实现其全部抽象方法**（domainValidate、save、delete）；每次领域操作完成后发送领域事件；将仓储、网关、领域事件发布器定义为聚合根属性；不得包含 is_deleted/deleted/isDeleted 等软删除标记；提供传入必填字段（含仓储、网关、领域事件发布器，不含状态）的构造方法；状态通过领域方法初始化与流转；封装领域行为。 |
 | **repository/** | **仅**三方法：`save(R)`、`R findByNum(String)`、`void deleteByNum(String)`；**禁止**第四方法及任意其他查询/写入签名。 |
 | **factory/** | 工厂**接口**；只能包含两个方法：`create(必填字段…)`、`createByNum(String num)`；两个方法都用于构建领域对象；`createByNum` 按业务编码委托 `repository.findByNum(num)`；禁止定义其他工厂方法；实现类在 infra。 |
 | **gateway/** | 生成业务编码；第三方/权限/**非仓储三方法的读能力**（按 id、邮箱、列表等）均在此定义接口；实现类在 infra。 |
@@ -117,7 +117,7 @@ Guides implementing the **domain** module：领域层，承载领域模型与领
 8. 领域逻辑放在实体或领域服务中，不在 application 中写 if/else 领域规则；application 只做「通过 Factory 取实体 → 调实体方法」，禁止直接调用 Repository。
 9. domain 中不出现 MyBatis、Spring、Redis 等基础设施注解；仅定义接口与领域逻辑，实现全部在 infra。
 10. **根实体必须完整实现 DomainEntity 抽象方法**：每一个继承 `DomainEntity` 的领域对象**必须完整实现其全部抽象方法**（`domainValidate()`、`save(operatorId)`、`delete(operatorId)`），不得只实现部分或留空；实现逻辑按技术方案与六步顺序编写。
-11. **根实体依赖与构造**：每个聚合根将**仓储、网关、领域事件发布器**定义为该对象的**属性**；提供**传入必填字段的构造方法**，入参为构建该领域对象必须的数据字段（包括仓储、网关、领域事件发布器），**不包括由状态机控制的状态字段**；状态字段通过**领域方法**进行初始化与流转。
+11. **根实体依赖与构造**：每个聚合根将**仓储、网关、领域事件发布器**定义为该对象的**属性**；聚合根与领域实体不得包含 `is_deleted`、`deleted`、`isDeleted` 等软删除标记；提供**传入必填字段的构造方法**，入参为构建该领域对象必须的数据字段（包括仓储、网关、领域事件发布器），**不包括由状态机控制的状态字段**；状态字段通过**领域方法**进行初始化与流转。
 12. **领域方法实现顺序**：所有领域方法按顺序执行——**1. 初始化对象**（`this.initialize(operatorId)`）→ **2. 领域规则校验**（如 `Assert.isTrue(状态条件, "错误信息")`）→ **3. 赋值/修改状态** → **4. 领域完整性校验**（`this.validate()`）→ **5. 持久化对象**（`repository.save(this)`）→ **6. 发布领域事件**（`domainEventPublisher.send(DomainEventDTO.builder().type(常量).id(事件ID).data(this或DTO).sender(operatorId).build())`）。示例见 reference 中 close() 方法。
 13. **每次领域操作完成后必须发送领域事件**：所有会改变状态或持久化的领域方法（含 `save`、`delete` 及业务方法如 `close`、`join` 等），在六步最后一步**都必须**发送与本次操作对应的领域事件，不得省略。**禁止 wasNew 式判断**：不得出现 `boolean wasNew` 或“仅新建时发事件”的逻辑，**每次执行 save 都发领域事件**。
 14. **持久化约定**：除 delete 外，所有需要持久化的领域操作**仅调用仓储的 save 方法**（不区分新增与更新）。

@@ -16,6 +16,7 @@
   - `Gateway`：本聚合需要的领域网关接口，用于外部能力或跨边界能力
   - `DomainEventPublisher`：领域事件发布器，用于发布领域事件
 - **值对象无需这些基本属性和领域协作依赖属性**，只包含业务属性。
+- **软删除标记不得出现在领域模型中**：聚合根和领域实体不得包含 `is_deleted`、`deleted`、`isDeleted` 等软删除标记。软删除是持久化实现细节，只能出现在数据库表和 infra Entity 中。
 - **聚合根和可持久化实体必须具备必备动作**：
   - `save(..., operatorId)`：保存或更新当前状态，必须带操作人
   - `delete(..., operatorId)`：删除当前对象，必须带操作人
@@ -207,6 +208,7 @@ classDiagram
 
 - [ ] 每个聚合根和实体是否有 id、num、create_no、update_no？
 - [ ] 每个聚合根是否持有 Repository、Gateway、DomainEventPublisher 三类领域协作依赖属性？
+- [ ] 聚合根和领域实体中是否没有 is_deleted/deleted/isDeleted 等软删除标记？
 - [ ] 每个聚合根和可持久化实体是否有 save/delete？
 - [ ] 所有领域动作是否包含 operatorId？
 - [ ] 是否按领域模型、领域动作、领域规则、领域工厂、领域网关、领域事件组织？

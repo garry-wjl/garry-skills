@@ -9,7 +9,8 @@
 1. **必须按业务领域分节**：领域层设计必须先进行业务层级划分，再按业务领域分节。
 2. **每个领域固定六类内容**：领域模型、领域动作、领域规则、领域工厂、领域网关、领域事件。
 3. **聚合根和实体必须具备基本属性**：`id`、`num`、`create_no`、`update_no`；聚合根还必须持有 `Repository`、`Gateway`、`DomainEventPublisher` 三类领域协作依赖属性；值对象无需。
-4. **聚合根和可持久化实体必须具备 save/delete**：且所有领域动作必须包含 `operatorId`。
+4. **软删除标记不得出现在领域模型中**：聚合根和领域实体不得包含 `is_deleted`、`deleted`、`isDeleted` 等软删除标记；软删除只属于数据库表和 infra Entity 的持久化实现细节。
+5. **聚合根和可持久化实体必须具备 save/delete**：且所有领域动作必须包含 `operatorId`。
 5. **必须设计领域动作**：领域动作要表达业务行为，而不是简单 CRUD；每个领域动作必须说明前置条件、后置结果、触发事件，并配时序图。
 6. **必须设计领域规则**：聚合内不变性、状态流转、权限/资格、额度/数量等规则必须显式列出。
 7. **必须设计领域工厂**：每个聚合根必须有对应 `*Factory`，且 Factory **只能包含** `create(...)` 与 `createByNum(...)` 两个方法。
@@ -109,6 +110,7 @@ Repository 不做列表、分页、统计等查询；这些查询由 `QueryServi
 - [ ] 是否按业务领域分节？
 - [ ] 每个领域是否包含领域模型、领域动作、领域规则、领域工厂、领域网关、领域事件？
 - [ ] 每个聚合根是否持有 Repository、Gateway、DomainEventPublisher 三类领域协作依赖属性？
+- [ ] 聚合根和领域实体中是否没有 is_deleted/deleted/isDeleted 等软删除标记？
 - [ ] 每个聚合根是否有 Factory，且 Factory 是否只包含 create(...) 与 createByNum(...) 两个方法，并且两个方法都用于构建领域对象？
 - [ ] 是否定义了领域网关 Gateway 接口，并说明由基础设施实现？
 - [ ] Repository 是否只有 save/findByNum/deleteByNum？

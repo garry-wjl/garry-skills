@@ -79,6 +79,7 @@ description: Produces technical solution documents from PRD input, structured fo
 
    - **领域模型**（如 4.x.1）  
      - **基本属性（强制）**：聚合根与实体须有 **id**、**num**、**create_no**、**update_no**；聚合根还必须持有领域协作依赖属性：**Repository（仓储）**、**Gateway（领域网关）**、**DomainEventPublisher（领域事件发布器）**；值对象无需。  
+     - **软删除标记约束（强制）**：软删除标记（如 `is_deleted`、`deleted`、`isDeleted`）不得出现在聚合根或领域实体中；软删除属于持久化实现细节，只能出现在数据库表与 infra Entity 中。  
      - **必备动作（强制）**：聚合根及可持久化实体须有 **save(operatorId)**、**delete(operatorId)**；**所有领域动作须带操作人参数**。  
      - **表现形式**：**领域类图 + 表格**。类图表达类名、属性（含类型）、关联；表格体现领域结构（对象、类型、属性、与其它对象关系）。  
      - **聚合与边界**：本领域聚合边界、聚合根及聚合内实体/值对象；一致性边界；跨聚合仅 ID 引用；Repository/Factory/Gateway 方法清单或类图。
@@ -202,7 +203,7 @@ description: Produces technical solution documents from PRD input, structured fo
 - [ ] **领域层设计**按**业务领域为二级目录**（如 4.2 用户、4.3 家庭、4.4 账本…），每个业务领域下包含**六个三级目录**：**领域模型**、**领域动作**、**领域规则**、**领域工厂**、**领域网关**、**领域事件**；各节内容符合上条（类图+表格、动作表+每动作一时序图、规则表、工厂方法表、网关方法表、事件表）；与模块变更清单中 domain 层描述一致。
 - [ ] 每个聚合根已设计对应 **Factory 接口**，且 Factory 只包含 `create(...)` 与 `createByNum(...)` 两个方法；两个方法都用于构建领域对象；application 层不直接 new 领域对象、不直接调用领域对象静态 create 构建对象。
 - [ ] 领域网关 Gateway 接口已定义在 domain 层，并明确由 infra 层实现 GatewayImpl。
-- [ ] 所有聚合根与实体已具备**基本属性** id、num、create_no、update_no；聚合根已具备 Repository、Gateway、DomainEventPublisher 三类领域协作依赖属性；均具备 **save**、**delete** 领域动作；**所有领域动作均包含操作人参数**（如 operatorId）。
+- [ ] 所有聚合根与实体已具备**基本属性** id、num、create_no、update_no；聚合根已具备 Repository、Gateway、DomainEventPublisher 三类领域协作依赖属性；聚合根与领域实体中未出现 is_deleted/deleted/isDeleted 等软删除标记；均具备 **save**、**delete** 领域动作；**所有领域动作均包含操作人参数**（如 operatorId）。
 - [ ] **基础设施层设计**已覆盖 Entity、Mapper、RepositoryImpl、FactoryImpl、GatewayImpl 与 common 能力；RepositoryImpl 不作为 application 查询入口；与数据库设计和 domain 接口一致；若无 infra 变化，已明确写出「本次无基础设施层变更」。
 - [ ] **数据库设计**已包含表结构、**DDL 语句**（可直接执行），若涉及刷数则含 **DML 语句**；与领域对应关系及模块变更清单中 infra 层描述一致；**各表主键 `id` 为 `BIGINT` 且自增**；**`create_time`/`update_time` 命名且时间类型毫秒精度**（见 §8 / reference 数据库模块）。
 - [ ] **代码分支命名**已填写：需求类为 `feature-YYYYMMDD-英文名`，BUG 修复类为 `hotfix-YYYYMMDD-英文名`；方案中写出本条对应的具体分支名。

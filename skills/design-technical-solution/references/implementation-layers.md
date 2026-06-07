@@ -113,14 +113,14 @@ For each adapter entry (Mermaid sequenceDiagram or ordered list):
 - `create_no`: Creator ID (VARCHAR)
 - `update_no`: Last updater ID (VARCHAR)
 - Unique key on `num` field: `UNIQUE KEY uk_xxx_num (num)`
-- Logical delete: `is_deleted INT (0 = not deleted, 1 = deleted)` with `@TableLogic`
+- 软删除字段：如需软删除，可在数据库表与 infra Entity 中使用 `is_deleted INT (0 = 未删除, 1 = 已删除)` 和 `@TableLogic`；该字段不得出现在聚合根或领域实体中。
 
 ### Table Structure Template
 
 | Table | Description | Main Fields | Indexes |
 |-------|------------|------------|---------|
-| conversation | Conversation AR | **id(PK, BIGINT AI)**, num, create_no, update_no, title, status, **create_time(3)**, **update_time(3)**, is_deleted | num(UK), status, create_no |
-| message | Message Entity | **id(PK, BIGINT AI)**, num, create_no, update_no, conversation_id(BIGINT FK), content, sender_id, **create_time(3)**, **update_time(3)**, is_deleted | conversation_id, num |
+| conversation | Conversation 聚合根对应表 | **id(PK, BIGINT AI)**, num, create_no, update_no, title, status, **create_time(3)**, **update_time(3)**, is_deleted（仅 DB/Entity） | num(UK), status, create_no |
+| message | Message 实体对应表 | **id(PK, BIGINT AI)**, num, create_no, update_no, conversation_id(BIGINT FK), content, sender_id, **create_time(3)**, **update_time(3)**, is_deleted（仅 DB/Entity） | conversation_id, num |
 
 **Mapping**: `conversation` table ← Conversation AR; `message` table ← Message entity (logically belongs to Conversation)
 
