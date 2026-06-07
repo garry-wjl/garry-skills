@@ -44,8 +44,9 @@ Adapter is the external trigger entry layer. It includes HTTP controllers, sched
 
 For each controller (CommandController, QueryController), specify:
 - **HTTP method + path**: POST /api/xxx/command/create, GET /api/xxx/query/list
-- **Input**: Request body type (Param), path/query params; auth required?
-- **Output**: Result<VO>, Result<List<VO>>, etc.
+- **Input**: Request body type (`*Param` class from client layer), path/query params; auth required?
+- **Output**: `Result<*VO>`, `Result<List<*VO>>`, etc.
+- **DTO→VO conversion**: If application layer returns DTO (not VO), controller must convert DTO to VO before returning
 - **Responsibility**: Which use case or Service method it calls
 
 ### Scheduled Job Checklist
@@ -71,11 +72,12 @@ For each listener, specify:
 ### Entry Sequence Logic
 
 For each adapter entry (Mermaid sequenceDiagram or ordered list):
-1. **Receive trigger**: HTTP request, scheduler tick, MQ/event message
+1. **Receive trigger**: HTTP request with `*Param` body/query, scheduler tick, MQ/event message
 2. **Authentication/context**: Validate JWT or build system operator/context when applicable
-3. **Basic validation**: Non-null, format checks (or delegate to Service)
-4. **Call application layer**: Call CommandService/QueryService with ParamDTO and operator/context
-5. **Acknowledge/respond**: Return Result for HTTP, complete job, ACK/NACK message; exception → Result.fail/retry/DLQ/alert
+3. **Basic validation**: Non-null, format checks via `@Valid` (or delegate to Service)
+4. **DTO→VO conversion**: If the application Service returns DTO types, convert DTO to VO before or after calling the Service
+5. **Call application layer**: Call CommandService/QueryService with converted parameters and operator/context
+6. **Acknowledge/respond**: Return `Result<*VO>` for HTTP, complete job, ACK/NACK message; exception → Result.fail/retry/DLQ/alert
 
 **HTTP Method Convention**: Only **GET** (read) and **POST** (create/update/delete); NO PUT, DELETE, PATCH
 

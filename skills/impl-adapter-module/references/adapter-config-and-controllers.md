@@ -127,7 +127,7 @@ public class ConversationCommandController extends BaseController {
 }
 ```
 
-Key: Input = client Param + @Valid; only call application; return Result.ok(data); write operations use POST.
+Key: Input = client `*Param` + `@Valid`; only call application Service (which returns client DTO); convert DTO to VO if needed; return `Result.ok(vo)`; write operations use POST.
 
 ---
 
@@ -167,4 +167,4 @@ public class ConversationQueryController extends BaseController {
 }
 ```
 
-Key: Read operations use GET; call application QueryService only; return Result.ok(data).
+Key: Read operations use GET; call application QueryService only (which returns client DTO); convert DTO to VO if needed; return `Result.ok(vo)`.
