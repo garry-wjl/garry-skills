@@ -133,7 +133,9 @@ description: Produces technical solution documents from PRD input, structured fo
    与**领域层设计**一致：**先根据业务层级/业务模块划分，再按具体模块编写**；模块与「领域层设计」及「应用层设计」中的业务模块对应，便于 **impl-adapter-module** 落码。adapter 层是外部触发入口层，除 HTTP Controller 外，还包括**定时任务入口**（如 Scheduler/Job）与**事件监听入口**（如 MQ Listener、Domain/Application Event Listener）。详见 [adapter-layer-design-experience.md](references/adapter-layer-design-experience.md)。  
    **接口约定（强制）**：  
    - **HTTP 方法仅允许两种**：**GET**（查询）、**POST**（增删改）；不得使用 PUT、DELETE、PATCH 等。  
-   - **入参与返回值**：每个 HTTP 接口须用 **JSON** 方式描述入参和返回值（请求体/响应体的 JSON 示例或 schema），便于与 impl-client-module、impl-adapter-module 对齐。  
+   - **入参必须使用 `*Param` 类**：Controller 方法的入参必须使用 `*Param` 类封装，定义在 client 层，以 JSON 或 query 方式传递；禁止使用 `DTO`、领域对象或零散原始类型作为 Controller 入参。  
+   - **返回值必须使用 `*VO` 类**：Controller 返回的业务数据（除 `Result` 等全局包装结构外）必须使用 `*VO` 类封装，定义在 client 层；返回格式为 `Result<*VO>` 或 `Result<List<*VO>>`。若应用层返回的是 `DTO` 类型，控制器须在接口时序逻辑中说明 `DTO` → `VO` 的转换步骤。  
+   - **入参与返回值**：每个 HTTP 接口须用 **JSON** 方式描述入参（`*Param`）和返回值（`Result<*VO>`）的 JSON 示例或 schema，便于与 impl-client-module、impl-adapter-module 对齐。  
    - **定时任务入口**：须描述任务名称、触发周期/cron、幂等策略、并发控制、调用的 Application Service、失败重试与告警。  
    - **事件监听入口**：须描述监听来源（MQ topic/tag、事件类型等）、消费幂等、重试/DLQ、并发消费、调用的 Application Service、异常处理与告警。  
    **文档目录结构**：  
@@ -213,7 +215,7 @@ description: Produces technical solution documents from PRD input, structured fo
 - [ ] 若涉及 Agent，在 application 与 adapter 的变更中明确是 Agent 子包结构（config/hook/interceptor/service/tool、单一 AgentService）。
 - [ ] **设计出的所有方法/入口都须有时序图**：领域动作、应用层每个 Service 方法、Adapter 层每个 HTTP 接口/定时任务/事件监听入口均配有时序图描述实现逻辑。
 - [ ] **应用层设计**先**业务模块划分**（6.1），再**按业务模块为二级目录**，每模块下含 **Service 方法清单**与**方法时序逻辑**（**每个方法一张时序图**）；与领域层设计中的业务领域对应；application 中未注入/调用任何 Repository 或 Gateway，查询需求均通过对应领域 QueryService 提供；CommandService 写操作已设计 Redis 分布式锁；Spring Bean 注入统一使用 `@Resource`。
-- [ ] **Adapter 层设计**覆盖 HTTP Controller、定时任务、事件监听等外部触发入口；HTTP 仅使用 **GET（查询）**与 **POST（增删改）**，每个接口的入参与返回值用 **JSON** 描述；每个接口/任务/监听入口均有时序图；定时任务说明 cron、幂等、并发与告警；事件监听说明 topic/tag/事件类型、幂等、重试/DLQ 与告警；与应用层、领域模块对应；Spring Bean 注入统一使用 `@Resource`。
+- [ ] **Adapter 层设计**覆盖 HTTP Controller、定时任务、事件监听等外部触发入口；HTTP 仅使用 **GET（查询）**与 **POST（增删改）**；Controller 入参使用 `*Param` 类，出参使用 `*VO` 类（除 `Result` 等全局包装外），若应用层返回 DTO 则说明 DTO → VO 转换步骤；每个接口/任务/监听入口均有时序图；定时任务说明 cron、幂等、并发与告警；事件监听说明 topic/tag/事件类型、幂等、重试/DLQ 与告警；与应用层、领域模块对应；Spring Bean 注入统一使用 `@Resource`。
 
 ## 使用完成后的最后一步：更新知识图谱
 
